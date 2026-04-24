@@ -170,10 +170,12 @@ func ProcessIndexVspc(daaScoreListByRemoved []uint64, acceptedList []*protowire.
         delete(iddkeysToRemove, keyVspc)
         val, err = proto.Marshal(vspc)
         if err != nil {
+            txRollback(txRocks)
             return status, err
         }
         err = putCF(txRocks, cfIndex, []byte(keyVspc), val, block.DaaScore)
         if err != nil {
+            txRollback(txRocks)
             return status, err
         }
         // index blue
@@ -182,6 +184,7 @@ func ProcessIndexVspc(daaScoreListByRemoved []uint64, acceptedList []*protowire.
         delete(iddkeysToRemove, keyBlue)
         err = putCF(txRocks, cfIndex, []byte(keyBlue), daaScoreBe, block.DaaScore)
         if err != nil {
+            txRollback(txRocks)
             return status, err
         }
     }
