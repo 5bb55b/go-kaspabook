@@ -33,7 +33,7 @@ type DbRuntimeStatusType struct {
 }
 
 ////////////////////////////////
-const dtlIddKeys = 864000
+const dtlIddKeys = 288000
 const keyRuntimeStatus = "runtime_status"
 const keyPrefixIddkeys = "iddkeys_"
 

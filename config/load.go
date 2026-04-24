@@ -15,7 +15,7 @@ import (
 var json = jsoniter.ConfigCompatibleWithStandardLibrary
 
 ////////////////////////////////
-const Version = "1.01.260420"
+const Version = "1.01.260424"
 
 ////////////////////////////////
 type cmdConfig struct {
@@ -135,5 +135,7 @@ func Load() {
     }
     if Rocksdb.DtlIndex > 0 && Rocksdb.DtlIndex < 2592000 {
         Rocksdb.DtlIndex = 2592000
+    } else if Rocksdb.DtlIndex == 0 {
+        Rocksdb.GcLoop = false
     }
 }
