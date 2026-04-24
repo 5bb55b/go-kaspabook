@@ -7,9 +7,9 @@
 //
 //
 syntax = "proto3";
-package protokaspa;
+package protowire;
 
-option go_package = ".;protokaspa";
+option go_package = ".;protowire";
 
 // RPCError represents a generic non-internal error.
 //

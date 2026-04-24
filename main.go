@@ -67,7 +67,7 @@ func main() {
     // Set exit signal.
     ctx, cancel := context.WithCancel(context.Background())
     wg := &sync.WaitGroup{}
-    c := make(chan os.Signal)
+    c := make(chan os.Signal, 8)
     signal.Notify(c, os.Interrupt, syscall.SIGTERM)
     down := false
     go func() {
@@ -79,7 +79,7 @@ func main() {
         down = true
     }()
     
-    // Init storage driver.
+    // Init database driver.
     database.Init()
     
     // Init api server
@@ -87,7 +87,7 @@ func main() {
     
     // Init scanner if api server up.
     if (!down) {
-        err = kaspa.Init(ctx, wg)
+        err = kaspa.Init(ctx)
         if err != nil {
             slog.Info("kaspa.Init fatal.", "error", err.Error())
             c <- syscall.SIGTERM

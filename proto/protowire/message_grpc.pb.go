@@ -4,7 +4,7 @@
 // - protoc             v6.32.0
 // source: message.proto
 
-package protokaspa
+package protowire
 
 import (
 	context "context"
@@ -19,7 +19,7 @@ import (
 const _ = grpc.SupportPackageIsVersion9
 
 const (
-	RPC_MessageStream_FullMethodName = "/protokaspa.RPC/MessageStream"
+	RPC_MessageStream_FullMethodName = "/protowire.RPC/MessageStream"
 )
 
 // RPCClient is the client API for RPC service.
@@ -100,7 +100,7 @@ type RPC_MessageStreamServer = grpc.BidiStreamingServer[KaspadRequest, KaspadRes
 // It's only intended for direct use with grpc.RegisterService,
 // and not to be introspected or modified (even as a copy)
 var RPC_ServiceDesc = grpc.ServiceDesc{
-	ServiceName: "protokaspa.RPC",
+	ServiceName: "protowire.RPC",
 	HandlerType: (*RPCServer)(nil),
 	Methods:     []grpc.MethodDesc{},
 	Streams: []grpc.StreamDesc{

@@ -3,38 +3,41 @@
 package kaspa
 
 import (
-    //"fmt"
-    "sync"
     "time"
+    "strconv"
     "context"
-    //"strconv"
     "log/slog"
-    //"kaspabook/config"
+    "kaspabook/config"
+    "kaspabook/database"
 )
-
-////////////////////////////////
-    //const
     
 ////////////////////////////////
 var ctx context.Context
 var grpcKaspa *GrpcConnectionType
+var dataRuntimeStatus *database.DbRuntimeStatusType
 
 ////////////////////////////////
-func Init(ctxRaw context.Context, wgRaw *sync.WaitGroup) (error) {
+func Init(ctxRaw context.Context) (error) {
     var err error
     ctx = ctxRaw
-    
-    // ...
-    
     grpcKaspa, err = GrpcNewConnection()
     if err != nil {
-        
-        // ...
-        
+        return err
     }
-    
-    // ...
-    
+    dataRuntimeStatus, err = database.GetRuntimeStatus()
+    if err != nil {
+        return err
+    }
+    if dataRuntimeStatus.ScannedBook == "" {
+        dagInfo, err := grpcKaspa.GetBlockDagInfo()
+        if err != nil {
+            return err
+        }
+        dataRuntimeStatus.ScannedBook = dagInfo.PruningPointHash
+    }
+    dataRuntimeStatus.VersionBook = config.Version
+    dataRuntimeStatus.Hysteresis = strconv.Itoa(config.Startup.Hysteresis)
+    dataRuntimeStatus.DtlIndex = strconv.FormatUint(config.Rocksdb.DtlIndex, 10)
     initCache()
     return nil
 }
@@ -43,8 +46,12 @@ func Init(ctxRaw context.Context, wgRaw *sync.WaitGroup) (error) {
 func Run() {
     defer func() {
         grpcKaspa.Close()
-        // ...
     }()
+    if config.Rocksdb.GcLoop {
+        
+        // go func - compaction ...
+        
+    }
     for {
         select {
         case <-ctx.Done():

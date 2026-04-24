@@ -13,16 +13,16 @@ import (
     "google.golang.org/grpc/credentials/insecure"
     "google.golang.org/grpc/keepalive"
     "kaspabook/config"
-    "kaspabook/protokaspa"
+    "kaspabook/proto/protowire"
 )
 
 ////////////////////////////////
 type GrpcConnectionType struct {
     sync.RWMutex
     conn *grpc.ClientConn
-    client protokaspa.RPCClient
-    stream protokaspa.RPC_MessageStreamClient
-    pending map[uint64]chan *protokaspa.KaspadResponse
+    client protowire.RPCClient
+    stream protowire.RPC_MessageStreamClient
+    pending map[uint64]chan *protowire.KaspadResponse
     retry int
     index int
     closed chan struct{}
@@ -31,7 +31,7 @@ type GrpcConnectionType struct {
 ////////////////////////////////
 func GrpcNewConnection() (*GrpcConnectionType, error) {
     g := &GrpcConnectionType{}
-    g.pending = make(map[uint64]chan *protokaspa.KaspadResponse, 256)
+    g.pending = make(map[uint64]chan *protowire.KaspadResponse, 256)
     g.closed = make(chan struct{})
     err := g.connect()
     if err != nil {
@@ -44,6 +44,7 @@ func GrpcNewConnection() (*GrpcConnectionType, error) {
 func (g *GrpcConnectionType) Close() {
     close(g.closed)
     g.disconnect()
+    slog.Info("kaspag.GrpcConnection.Close")
 }
 
 ////////////////////////////////
@@ -55,11 +56,7 @@ func (g *GrpcConnectionType) connect() (error) {
     }
     ctxTimeout, cancelTimeout := context.WithTimeout(context.Background(), 13*time.Second)
     defer cancelTimeout()
-    g.retry ++
-    if g.retry > 55 {
-        // ...
-    }
-    slog.Info("kaspa.connect dialing ..", "index", g.index, "retry", g.retry, "grpc", config.Kaspad.Grpc[g.index])
+    slog.Info("kaspa.GrpcConnection.connect dialing ..", "index", g.index, "retry", g.retry, "grpc", config.Kaspad.Grpc[g.index])
     var err error
     g.conn, err = grpc.DialContext(
         ctxTimeout, 
@@ -76,7 +73,7 @@ func (g *GrpcConnectionType) connect() (error) {
     if err != nil {
         return err
     }
-    g.client = protokaspa.NewRPCClient(g.conn)
+    g.client = protowire.NewRPCClient(g.conn)
     g.stream, err = g.client.MessageStream(context.Background())
     if err != nil {
         g.conn.Close()
@@ -89,7 +86,7 @@ func (g *GrpcConnectionType) connect() (error) {
         for {
             r, err := g.stream.Recv()
             if err != nil {
-                slog.Warn("kaspa.connect stream/Recv failed.", "error", err.Error())
+                slog.Warn("kaspa.GrpcConnection.connect stream/Recv failed.", "error", err.Error())
                 return
             }
             if r.Id == 0 {
@@ -111,15 +108,25 @@ func (g *GrpcConnectionType) connect() (error) {
             case <-g.stream.Context().Done():
                 err := g.stream.Context().Err()
                 g.disconnect()
-                slog.Error("kaspa.connect disconnected.", "error", err.Error())
+                slog.Info("kaspa.GrpcConnection.connect disconnected.", "reason", err.Error())
                 for {
-                    time.Sleep(3 * time.Second)
-                    err := g.connect()
-                    if err != nil {
-                        slog.Error("kaspa.connect failed.", "error", err.Error())
-                        continue
+                    select {
+                    case <-ctx.Done():
+                        return
+                    default:
+                        g.retry ++
+                        if g.retry > 55 {
+                            slog.Error("kaspa.GrpcConnection.connect failed.", "error", "retries exceeded")
+                            return
+                        }
+                        time.Sleep(3 * time.Second)
+                        err := g.connect()
+                        if err != nil {
+                            slog.Error("kaspa.GrpcConnection.connect failed.", "error", err.Error())
+                            break
+                        }
+                        return
                     }
-                    break
                 }
                 return
             }
@@ -153,10 +160,10 @@ func (g *GrpcConnectionType) disconnect() {
 }
 
 ////////////////////////////////
-func (g *GrpcConnectionType) request(message *protokaspa.KaspadRequest) (*protokaspa.KaspadResponse, error) {
+func (g *GrpcConnectionType) request(message *protowire.KaspadRequest) (*protowire.KaspadResponse, error) {
     id := rand.Uint64()
     message.Id = id
-    ch := make(chan *protokaspa.KaspadResponse, 1)
+    ch := make(chan *protowire.KaspadResponse, 1)
     g.Lock()
     g.pending[id] = ch
     g.Unlock()
@@ -194,8 +201,53 @@ func (g *GrpcConnectionType) request(message *protokaspa.KaspadRequest) (*protok
 }
 
 ////////////////////////////////
-func (g *GrpcConnectionType) GetBlock(hash string) (*protokaspa.GetBlockResponseMessage, error) {
-    r, err := g.request(&protokaspa.KaspadRequest{Id:0, Payload:&protokaspa.KaspadRequest_GetBlockRequest{GetBlockRequest:&protokaspa.GetBlockRequestMessage{
+func (g *GrpcConnectionType) GetInfo() (*protowire.GetInfoResponseMessage, error) {
+    r, err := g.request(&protowire.KaspadRequest{Payload:&protowire.KaspadRequest_GetInfoRequest{GetInfoRequest:&protowire.GetInfoRequestMessage{}}})
+    if err != nil {
+        return nil, err
+    }
+    response := r.GetGetInfoResponse()
+    if response == nil {
+        return nil, fmt.Errorf("nil info")
+    } else if response.Error != nil && response.Error.Message != "" {
+        return nil, fmt.Errorf("%s", response.Error.Message)
+    }
+    return response, nil
+}
+
+////////////////////////////////
+func (g *GrpcConnectionType) GetServerInfo() (*protowire.GetServerInfoResponseMessage, error) {
+    r, err := g.request(&protowire.KaspadRequest{Payload:&protowire.KaspadRequest_GetServerInfoRequest{GetServerInfoRequest:&protowire.GetServerInfoRequestMessage{}}})
+    if err != nil {
+        return nil, err
+    }
+    response := r.GetGetServerInfoResponse()
+    if response == nil {
+        return nil, fmt.Errorf("nil serverInfo")
+    } else if response.Error != nil && response.Error.Message != "" {
+        return nil, fmt.Errorf("%s", response.Error.Message)
+    }
+    return response, nil
+}
+
+////////////////////////////////
+func (g *GrpcConnectionType) GetBlockDagInfo() (*protowire.GetBlockDagInfoResponseMessage, error) {
+    r, err := g.request(&protowire.KaspadRequest{Payload:&protowire.KaspadRequest_GetBlockDagInfoRequest{GetBlockDagInfoRequest:&protowire.GetBlockDagInfoRequestMessage{}}})
+    if err != nil {
+        return nil, err
+    }
+    response := r.GetGetBlockDagInfoResponse()
+    if response == nil {
+        return nil, fmt.Errorf("nil dagInfo")
+    } else if response.Error != nil && response.Error.Message != "" {
+        return nil, fmt.Errorf("%s", response.Error.Message)
+    }
+    return response, nil
+}
+
+////////////////////////////////
+func (g *GrpcConnectionType) GetBlock(hash string) (*protowire.GetBlockResponseMessage, error) {
+    r, err := g.request(&protowire.KaspadRequest{Payload:&protowire.KaspadRequest_GetBlockRequest{GetBlockRequest:&protowire.GetBlockRequestMessage{
         Hash: hash,
         IncludeTransactions: false,
     }}})
@@ -210,5 +262,28 @@ func (g *GrpcConnectionType) GetBlock(hash string) (*protokaspa.GetBlockResponse
     }
     return response, nil
 }
+
+////////////////////////////////
+func (g *GrpcConnectionType) GetVirtualChainFromBlockV2(startHash string, count uint64) (*protowire.GetVirtualChainFromBlockV2ResponseMessage, error) {
+    level := protowire.RpcDataVerbosityLevel_HIGH
+    r, err := g.request(&protowire.KaspadRequest{Payload:&protowire.KaspadRequest_GetVirtualChainFromBlockV2Request{GetVirtualChainFromBlockV2Request:&protowire.GetVirtualChainFromBlockV2RequestMessage{
+        StartHash: startHash,
+        DataVerbosityLevel: &level,
+        MinConfirmationCount: &count,
+    }}})
+    if err != nil {
+        return nil, err
+    }
+    response := r.GetGetVirtualChainFromBlockV2Response()
+    if response == nil {
+        return nil, fmt.Errorf("nil vspc")
+    } else if response.Error != nil && response.Error.Message != "" {
+        return nil, fmt.Errorf("%s", response.Error.Message)
+    }
+    return response, nil
+}
+
+// balance ...
+// utxo ...
 
 // ...

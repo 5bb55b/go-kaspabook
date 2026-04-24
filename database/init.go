@@ -6,16 +6,20 @@ package database
 import "C"
 import (
     "log/slog"
+    jsoniter "github.com/json-iterator/go"
 )
+
+////////////////////////////////
+var json = jsoniter.ConfigCompatibleWithStandardLibrary
 
 ////////////////////////////////
 func Init() {
     initRocks()
-    slog.Info("storage ready.")
+    slog.Info("database ready.")
 }
 
 ////////////////////////////////
 func Close() {
     destroyRocks()
-    slog.Info("storage released.")
+    slog.Info("database released.")
 }

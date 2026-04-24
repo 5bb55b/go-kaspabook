@@ -98,7 +98,7 @@ func initRocks() {
     if errC != nil {
         err := errRocks(errC)
         destroyRocks()
-        log.Fatalln("storage.Init fatal: ", err)
+        log.Fatalln("database.initRocks fatal: ", err)
     }
     valPool = sync.Pool{
         New: func() any {

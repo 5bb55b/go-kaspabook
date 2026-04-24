@@ -25,7 +25,6 @@ var cacheBlockScore cacheBlockScoreType
 func initCache() {
     cacheBlockScore.Index = make([]string, 0, cacheBlockScoreMax*2)
     cacheBlockScore.Score = make(map[string]*blockScoreType)
-    // ...
 }
 
 ////////////////////////////////

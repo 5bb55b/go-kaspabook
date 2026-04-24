@@ -1,0 +1,39 @@
+
+syntax = "proto3";
+package protobook;
+
+option go_package = ".;protobook";
+
+message Vspc {
+  bytes hash = 1;
+  repeated bytes txIds = 2;
+}
+
+message Block {
+	bytes hash = 1;
+	uint64 daaScore = 2;
+	uint64 blueScore = 3;
+	uint64 timestamp = 4;
+	bytes acceptedIdMerkleRoot = 5;
+}
+
+message Transaction {
+	bytes txId = 1;
+	bytes txHash = 2;
+	bytes blockHash = 3;
+	uint64 blockTime = 4;
+	repeated TransactionInput inputs = 5;
+	repeated TransactionOutput outputs = 6;
+}
+
+message TransactionInput {
+	bytes prevTxId = 1;
+	uint32 prevTxIndex = 2;
+	string address = 3;
+	uint64 amount = 4;
+}
+
+message TransactionOutput {
+	string address = 1;
+	uint64 amount = 2;
+}
