@@ -134,15 +134,11 @@ func ProcessIndexVspc(daaScoreListByRemoved []uint64, acceptedList []*protowire.
             // index transaction-st
             keyTransactionSt := KeyPrefixTransactionSt + txIdString
             iddkeysToAdd[keyIddkeys] = append(iddkeysToAdd[keyIddkeys], keyTransactionSt)
-            _, exists := iddkeysToRemove[keyTransactionSt]
-            if exists {
-                delete(iddkeysToRemove, keyTransactionSt)
-            } else {
-                err = putCF(txRocks, cfIndex, []byte(keyTransactionSt), nil, block.DaaScore)
-                if err != nil {
-                    txRollback(txRocks)
-                    return status, err
-                }
+            delete(iddkeysToRemove, keyTransactionSt)
+            err = putCF(txRocks, cfIndex, []byte(keyTransactionSt), acceptedBlockHashBin, block.DaaScore)
+            if err != nil {
+                txRollback(txRocks)
+                return status, err
             }
             // index address
             for address := range addressMap {
@@ -204,7 +200,7 @@ func ProcessIndexVspc(daaScoreListByRemoved []uint64, acceptedList []*protowire.
     status.LenTransaction = lenTransactionTotal
     status.DaaScoreBookInt = *blockLast.DaaScore
     status.DaaScoreBook = strconv.FormatUint(status.DaaScoreBookInt, 10)
-    status.DaaScoreBook = strconv.FormatUint(*blockLast.BlueScore, 10)
+    status.BlueScoreBook = strconv.FormatUint(*blockLast.BlueScore, 10)
     status.ScannedBook = *blockLast.Hash
     gap := uint64(0)
     if status.DaaScoreKaspadInt > status.DaaScoreBookInt {
@@ -219,6 +215,87 @@ func ProcessIndexVspc(daaScoreListByRemoved []uint64, acceptedList []*protowire.
     // commit
     err = txCommit(txRocks, true)
     return status, err
+}
+
+////////////////////////////////
+func getIndexBlockByHashBin(hashBin []byte) (*protobook.Block, error) {
+    var block *protobook.Block
+    key := append([]byte(KeyPrefixBlock), hashBin...)
+    _, err := getCF(nil, cfIndex, key, func(val []byte) (error) {
+        if len(val) == 0 {
+            return nil
+        }
+        block = &protobook.Block{}
+        err := proto.Unmarshal(val, block)
+        return err
+    })
+    if err != nil {
+        return nil, err
+    }
+    return block, nil
+}
+
+////////////////////////////////
+func getIndexTransactionByTxIdBin(txIdBin []byte) (*protobook.Transaction, error) {
+    var tx *protobook.Transaction
+    key := append([]byte(KeyPrefixTransaction), txIdBin...)
+    _, err := getCF(nil, cfIndex, key, func(val []byte) (error) {
+        if len(val) == 0 {
+            return nil
+        }
+        tx = &protobook.Transaction{}
+        err := proto.Unmarshal(val, tx)
+        return err
+    })
+    if err != nil {
+        return nil, err
+    }
+    return tx, nil
+}
+
+////////////////////////////////
+func GetIndexChainBlock(hash string) (*protobook.Block, error) {
+    hashBin, _ := hex.DecodeString(hash)
+    isChainBlock := false
+    key := append([]byte(KeyPrefixBlockSt), hashBin...)
+    _, err := getCF(nil, cfIndex, key, func(val []byte) (error) {
+        isChainBlock = true
+        return nil
+    })
+    if err != nil || !isChainBlock {
+        return nil, err
+    }
+    block, err := getIndexBlockByHashBin(hashBin)
+    if err != nil {
+        return nil, err
+    }
+    return block, nil
+}
+
+////////////////////////////////
+func GetIndexAcceptedTransaction(txId string) (*protobook.Transaction, *protobook.Block, error) {
+    txIdBin, _ := hex.DecodeString(txId)
+    acceptedBlockBin := ""
+    key := append([]byte(KeyPrefixTransactionSt), txIdBin...)
+    _, err := getCF(nil, cfIndex, key, func(val []byte) (error) {
+        if len(val) == 0 {
+            return nil
+        }
+        acceptedBlockBin = string(val)
+        return nil
+    })
+    if err != nil || acceptedBlockBin == "" {
+        return nil, nil, err
+    }
+    block, err := getIndexBlockByHashBin([]byte(acceptedBlockBin))
+    if err != nil {
+        return nil, nil, err
+    }
+    transaction, err := getIndexTransactionByTxIdBin(txIdBin)
+    if err != nil {
+        return nil, nil, err
+    }
+    return transaction, block, nil
 }
 
 // ...

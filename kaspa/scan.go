@@ -3,7 +3,6 @@
 package kaspa
 
 import (
-    //"fmt"
     "time"
     "strconv"
     "log/slog"

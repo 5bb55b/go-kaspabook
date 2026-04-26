@@ -15,10 +15,8 @@ import (
     "path/filepath"
     "kaspabook/config"
     "kaspabook/database"
+    "kaspabook/api"
     "kaspabook/kaspa"
-    
-    // ...
-    
 )
 
 ////////////////////////////////
@@ -37,20 +35,6 @@ func main() {
 
     // Load config.
     config.Load()
-    
-    // Use the file lock for startup.
-    fLock := "./.lockKaspaBook"
-    lock, err := os.Create(fLock)
-    if err != nil {
-        log.Fatalln("main fatal:", err.Error())
-    }
-    defer os.Remove(fLock)
-    defer lock.Close()
-    err = syscall.Flock(int(lock.Fd()), syscall.LOCK_EX|syscall.LOCK_NB)
-    if err != nil {
-        log.Fatalln("main fatal:", err.Error())
-    }
-    defer syscall.Flock(int(lock.Fd()), syscall.LOCK_UN)
     
     // Set the log level.
     logOpt := &slog.HandlerOptions{Level: slog.LevelError,}
@@ -83,11 +67,11 @@ func main() {
     database.Init()
     
     // Init api server
-    //api.Init(c)
+    api.Init(c)
     
     // Init scanner if api server up.
     if (!down) {
-        err = kaspa.Init(ctx)
+        err := kaspa.Init(ctx)
         if err != nil {
             slog.Info("kaspa.Init fatal.", "error", err.Error())
             c <- syscall.SIGTERM
@@ -102,7 +86,7 @@ func main() {
     
     // Waiting and exit.
     wg.Wait()
-    //api.Shutdown()
+    api.Shutdown()
     database.Close()
     slog.Info("main exited.")
 }

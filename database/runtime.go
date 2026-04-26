@@ -27,9 +27,9 @@ type DbRuntimeStatusType struct {
     Hysteresis string `json:"hysteresis,omitempty"`
     DtlIndex string `json:"dtlIndex,omitempty"`
     // runtime
-    DaaScoreKaspadInt uint64
-    DaaScoreBookInt uint64
-    LenTransaction int
+    DaaScoreKaspadInt uint64 `json:"-"`
+    DaaScoreBookInt uint64 `json:"-"`
+    LenTransaction int `json:"-"`
 }
 
 ////////////////////////////////

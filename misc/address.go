@@ -1,0 +1,162 @@
+
+////////////////////////////////
+package misc
+
+import (
+    "strings"
+    "encoding/hex"
+)
+
+////////////////////////////////
+func ConvAddressToSpk(address string) (string, string) {
+    testnet := false
+    s := strings.Index(address, ":")
+    if s == -1 {
+        return "", ""
+    }
+    s ++
+    if address[0:s] != "kaspa:" {
+        testnet = true
+    }
+    kPub := hex.EncodeToString([]byte(DecodeBech32(address[s:], testnet)))
+    if len(kPub) < 64 {
+        return "", ""
+    }
+    ver := kPub[:2]
+    spkType := ""
+    spk := ""
+    if ver == "00" {
+        spkType = "PubKey"
+        spk = "20" + kPub[2:] + "ac"
+    } else if ver == "01" {
+        spkType = "PubKeyECDSA"
+        spk = "21" + kPub[2:] + "ab"
+    } else if ver == "08" {
+        spkType = "ScriptHash"
+        spk = "aa20" + kPub[2:] + "87"
+    } else {
+        return "", ""
+    }
+    return spk, spkType
+}
+
+////////////////////////////////
+func EncodeBech32(data string, testnet bool) (string) {
+    _pMod := func(list []byte) int {
+        g := []int{0x98f2bc8e61, 0x79b76d99e2, 0xf33e5fb3c4, 0xae2eabe2a8, 0x1e4f43e470}
+        cs := 1
+        for _, v := range list {
+            b := cs >> 35
+            cs = ((cs & 0x07ffffffff) << 5) ^ int(v)
+            for i := 0; i < len(g); i++ {
+                if ((b >> uint(i)) & 1) == 1 {
+                    cs ^= g[i]
+                }
+            }
+        }
+        return cs ^ 1
+    }
+    b8 := []byte(data)
+    b8Len := len(b8)
+    nLast := 0
+    bLast := byte(0)
+    var b5 []byte
+    for i :=0; i < b8Len; i++ {
+        rMove := 3 + nLast
+        b := (b8[i] >> rMove) & 31
+        if nLast > 0 {
+            b |= bLast
+        }
+        b5 = append(b5, b)
+        nLast = rMove
+        if rMove >= 5 {
+            b5 = append(b5, (b8[i] << (8-rMove) >> 3) & 31)
+            nLast = rMove - 5
+        }
+        if nLast > 0 {
+            bLast = (b8[i] << (8-nLast) >> 3) & 31
+        }
+    }
+    if nLast > 0 {
+        b5 = append(b5, bLast)
+    }
+    b5ex := []byte{11, 1, 19, 16, 1, 0}
+    if testnet {
+        b5ex = []byte{11, 1, 19, 16, 1, 20, 5, 19, 20, 0}
+    }
+    b5ex = append(b5ex, b5...)
+    b5ex = append(b5ex, 0, 0, 0, 0, 0, 0, 0, 0)
+    p := _pMod(b5ex)
+    c := []string{"q", "p", "z", "r", "y", "9", "x", "8", "g", "f", "2", "t", "v", "d", "w", "0", "s", "3", "j", "n", "5", "4", "k", "h", "c", "e", "6", "m", "u", "a", "7", "l"}
+    for i := 0; i < 8; i++ {
+        b5 = append(b5, byte((p >> (5*(7-i))) & 31))
+    }
+    result := ""
+    for i := 0; i < len(b5); i++ {
+        result += c[int(b5[i])]
+    }
+    return result
+}
+
+////////////////////////////////
+func DecodeBech32(data string, testnet bool) (string) {
+    _pMod := func(list []byte) int {
+        g := []int{0x98f2bc8e61, 0x79b76d99e2, 0xf33e5fb3c4, 0xae2eabe2a8, 0x1e4f43e470}
+        cs := 1
+        for _, v := range list {
+            b := cs >> 35
+            cs = ((cs & 0x07ffffffff) << 5) ^ int(v)
+            for i := 0; i < len(g); i++ {
+                if ((b >> uint(i)) & 1) == 1 {
+                    cs ^= g[i]
+                }
+            }
+        }
+        return cs ^ 1
+    }
+    n := map[string]byte{"q":0, "p":1, "z":2, "r":3, "y":4, "9":5, "x":6, "8":7, "g":8, "f":9, "2":10, "t":11, "v":12, "d":13, "w":14, "0":15, "s":16, "3":17, "j":18, "n":19, "5":20, "4":21, "k":22, "h":23, "c":24, "e":25, "6":26, "m":27, "u":28, "a":29, "7":30, "l":31}
+    dataLen := len(data)
+    var b5 []byte
+    for i :=0; i < dataLen; i++ {
+        _, existed := n[data[i:i+1]]
+        if !existed {
+            return ""
+        }
+        b5 = append(b5, n[data[i:i+1]])
+    }
+    b5Len := len(b5)
+    cs := b5[b5Len-8:]
+    b5 = b5[:b5Len-8]
+    b5Len -= 8
+    b5ex := []byte{11, 1, 19, 16, 1, 0}
+    if testnet {
+        b5ex = []byte{11, 1, 19, 16, 1, 20, 5, 19, 20, 0}
+    }
+    b5ex = append(b5ex, b5...)
+    b5ex = append(b5ex, 0, 0, 0, 0, 0, 0, 0, 0)
+    p := _pMod(b5ex)
+    for i := 0; i < 8; i++ {
+        if cs[i] != byte((p >> (5*(7-i))) & 31) {
+            return ""
+        }
+    }
+    var b8 []byte
+    nLast := 0
+    bLast := byte(0)
+    for i :=0; i < b5Len; i++ {
+        offset := 3 - nLast
+        if offset == 0 {
+            b8 = append(b8, b5[i] | bLast)
+            nLast = 0
+            bLast = 0
+        } else if offset < 0 {
+            b8 = append(b8, (b5[i] >> (-offset)) | bLast)
+            nLast = -offset
+            bLast = b5[i] << (8-nLast)
+        } else {
+            bLast |= b5[i] << offset
+            nLast += 5
+        }
+    }
+    return string(b8)
+}
