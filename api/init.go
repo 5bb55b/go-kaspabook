@@ -59,9 +59,9 @@ func Init(c chan os.Signal) {
     server.Get("/book/status", routeBookStatus)
     server.Get("/book/block/:hash", routeBookBlock)
     server.Get("/book/transaction/:txid", routeBookTransaction)
-/*    server.Get("/book/daascore/:score", routeBookdaaScore)
-    server.Get("/book/bluescore/:score", routeBookblueScore)
-    server.Get("/book/address/:address/txns", routeBookAddressTransaction)
+    server.Get("/book/vspc/daascore/:score", routeBookVspcDaaScore)
+    server.Get("/book/vspc/bluescore/:score", routeBookVspcBlueScore)
+/*    server.Get("/book/address/:address/txns", routeBookAddressTransaction)
     // ...
     server.Get("/kaspad/address/:address/balance", routeKaspadAddressBalance)
     server.Get("/kaspad/address/:address/utxos", routeKaspadAddressUtxos)

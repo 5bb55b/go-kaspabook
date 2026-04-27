@@ -5,10 +5,12 @@ package database
 //#include "rocksdb/c.h"
 import "C"
 import (
+    "sync"
     "strconv"
     "encoding/hex"
     "encoding/binary"
     "google.golang.org/protobuf/proto"
+    "kaspabook/config"
     "kaspabook/proto/protowire"
     "kaspabook/proto/protobook"
 )
@@ -21,6 +23,9 @@ const KeyPrefixBlockSt = "blockst_"
 const KeyPrefixTransaction = "txn_"
 const KeyPrefixTransactionSt = "txnst_"
 const KeyPrefixAddress = "addr_"
+
+////////////////////////////////
+const maxCountIndexVspc = 50
 
 ////////////////////////////////
 func ProcessIndexVspc(daaScoreListByRemoved []uint64, acceptedList []*protowire.RpcChainBlockAcceptedTransactions, status *DbRuntimeStatusType) (*DbRuntimeStatusType, error) {
@@ -214,7 +219,11 @@ func ProcessIndexVspc(daaScoreListByRemoved []uint64, acceptedList []*protowire.
     }
     // commit
     err = txCommit(txRocks, true)
-    return status, err
+    if err != nil {
+        return status, err
+    }
+    SetDaaScoreLastRocks(status.DaaScoreBookInt)
+    return status, nil
 }
 
 ////////////////////////////////
@@ -296,6 +305,132 @@ func GetIndexAcceptedTransaction(txId string) (*protobook.Transaction, *protoboo
         return nil, nil, err
     }
     return transaction, block, nil
+}
+
+////////////////////////////////
+func GetIndexVspcListByDaaScore(score uint64, maxCount int, prev bool) ([]*protobook.Vspc, map[string]*protobook.Block, map[string]*protobook.Transaction, error) {
+    daaScoreStart := uint64(0)
+    daaScoreEnd := uint64(18446744073709551615)
+    daaScoreExpired := uint64(0)
+    if config.Rocksdb.DtlIndex > 0 {
+        daaScoreExpired = GetDaaScoreLastRocks() - config.Rocksdb.DtlIndex
+    }
+    if !prev {
+        daaScoreStart = score
+    } else {
+        daaScoreEnd = score + 1
+    }
+    if daaScoreStart < daaScoreExpired {
+        daaScoreStart = daaScoreExpired
+    }
+    if maxCount > maxCountIndexVspc {
+        maxCount = maxCountIndexVspc
+    } else if maxCount <= 0 {
+        maxCount = 1
+    }
+    daaScoreStartBe := make([]byte, 8)
+    binary.BigEndian.PutUint64(daaScoreStartBe, daaScoreStart)
+    daaScoreEndBe := make([]byte, 8)
+    binary.BigEndian.PutUint64(daaScoreEndBe, daaScoreEnd)
+    var keyStart []byte
+    var keyEnd []byte
+    keyStart = append([]byte(KeyPrefixVspc), daaScoreStartBe...)
+    keyEnd = append([]byte(KeyPrefixVspc), daaScoreEndBe...)
+    vspcList := make([]*protobook.Vspc, 0, maxCount)
+    blockKeyList := make([]string, 0, maxCount)
+    txKeyList := make([]string, 0, 256)
+    err := seekCF(nil, cfIndex, keyStart, keyEnd, maxCount, prev, nil, func(i int, key []byte, val []byte) (bool, error) {
+        if len(val) == 0 {
+            return true, nil
+        }
+        vspc := &protobook.Vspc{}
+        err := proto.Unmarshal(val, vspc)
+        if err != nil {
+            return false, err
+        }
+        vspcList = append(vspcList, vspc)
+        blockKeyList = append(blockKeyList, KeyPrefixBlock+string(vspc.Hash))
+        for _, txIdBin := range vspc.TxIds {
+            txKeyList = append(txKeyList, KeyPrefixTransaction+string(txIdBin))
+        }
+        return true, nil
+    })
+    if err != nil {
+        return nil, nil, nil, err
+    }
+    if len(vspcList) == 0 {
+        return nil, nil, nil, nil
+    }
+    blockMap := make(map[string]*protobook.Block, len(vspcList))
+    mutex := new(sync.RWMutex)
+    _, err = doGetBatchCF(nil, cfIndex, blockKeyList, func(i int, val []byte) (error) {
+        if len(val) == 0 {
+            return nil
+        }
+        block := &protobook.Block{}
+        err := proto.Unmarshal(val, block)
+        if err == nil {
+            mutex.Lock()
+            blockMap[string(block.Hash)] = block
+            mutex.Unlock()
+        }
+        return err
+    })
+    if err != nil {
+        return nil, nil, nil, err
+    }
+    transactionMap := make(map[string]*protobook.Transaction, len(txKeyList))
+    _, err = doGetBatchCF(nil, cfIndex, txKeyList, func(i int, val []byte) (error) {
+        if len(val) == 0 {
+            return nil
+        }
+        tx := &protobook.Transaction{}
+        err := proto.Unmarshal(val, tx)
+        if err == nil {
+            mutex.Lock()
+            transactionMap[string(tx.TxId)] = tx
+            mutex.Unlock()
+        }
+        return err
+    })
+    if err != nil {
+        return nil, nil, nil, err
+    }
+    return vspcList, blockMap, transactionMap, nil
+}
+
+////////////////////////////////
+func GetIndexVspcListByBlueScore(score uint64, maxCount int, prev bool) ([]*protobook.Vspc, map[string]*protobook.Block, map[string]*protobook.Transaction, error) {
+    blueScoreStart := uint64(0)
+    blueScoreEnd := uint64(18446744073709551615)
+    if !prev {
+        blueScoreStart = score
+    } else {
+        blueScoreEnd = score + 1
+    }
+    blueScoreStartBe := make([]byte, 8)
+    binary.BigEndian.PutUint64(blueScoreStartBe, blueScoreStart)
+    blueScoreEndBe := make([]byte, 8)
+    binary.BigEndian.PutUint64(blueScoreEndBe, blueScoreEnd)
+    var keyStart []byte
+    var keyEnd []byte
+    keyStart = append([]byte(KeyPrefixBlue), blueScoreStartBe...)
+    keyEnd = append([]byte(KeyPrefixBlue), blueScoreEndBe...)
+    daaScore := uint64(0)
+    err := seekCF(nil, cfIndex, keyStart, keyEnd, 1, prev, nil, func(i int, key []byte, val []byte) (bool, error) {
+        if len(val) == 0 {
+            return true, nil
+        }
+        daaScore = binary.BigEndian.Uint64(val)
+        return false, nil
+    })
+    if err != nil {
+        return nil, nil, nil, err
+    }
+    if daaScore == 0 {
+        return nil, nil, nil, nil
+    }
+    return GetIndexVspcListByDaaScore(daaScore, maxCount, prev)
 }
 
 // ...

@@ -26,12 +26,12 @@ func routeBookStatus(c *fiber.Ctx) (error) {
     status, err := getBookStatus()
     if err != nil {
         r.Message = msgInternalError
-        return c.Status(403).JSON(r)
+        return c.Status(503).JSON(r)
     }
     r.Result = status
     if status.StatusKaspad != "synced" {
         r.Message = msgUnsynced
-        return c.Status(403).JSON(r)
+        return c.Status(503).JSON(r)
     }
     r.Message = msgSynced
     return c.JSON(r)

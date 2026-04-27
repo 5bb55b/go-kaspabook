@@ -50,7 +50,7 @@ func scan() (bool) {
     lenAdded := len(vspc.AddedChainBlockHashes)
     lenRemoved := len(vspc.RemovedChainBlockHashes)
     if lenAdded == 0 || lenAdded != len(vspc.ChainBlockAcceptedTransactions) {
-        return sleepLog(550, slog.Warn, "kaspa.GetVirtualChainFromBlockV2 empty/mismatch, sleep 0.55s.")
+        return sleepLog(550, slog.Debug, "kaspa.GetVirtualChainFromBlockV2 empty/mismatch, sleep 0.55s.")
     }
     // Process the vspc/tx data list and update the runtime status.
     daaScoreListByRemoved := make([]uint64, 0, lenRemoved)
@@ -75,7 +75,7 @@ func scan() (bool) {
     expireCacheBlockScore(dataRuntimeStatus.DaaScoreBookInt)
     // Additional delay if synced.
     mtsLoop := time.Now().UnixMilli() - mtss
-    slog.Info("explorer.scan", "lenAdded", lenAdded, "lenRemoved", lenRemoved, "lenTransaction", dataRuntimeStatus.LenTransaction, "mSecondLoop", mtsLoop, "rateReorg", strconv.FormatInt(countReorg*1000/countLoopSynced,10)+"pt", "statusKaspad", dataRuntimeStatus.StatusKaspad)
+    slog.Info("explorer.scan", "lenAdded", lenAdded, "lenRemoved", lenRemoved, "lenTransaction", dataRuntimeStatus.LenTransaction, "mSecondLoop", mtsLoop, "reorg", strconv.FormatInt(countReorg*1000/countLoopSynced,10)+"pt", "statusKaspad", dataRuntimeStatus.StatusKaspad)
     gapInt := uint64(0)
     if dataRuntimeStatus.DaaScoreKaspadInt > dataRuntimeStatus.DaaScoreBookInt {
         gapInt = dataRuntimeStatus.DaaScoreKaspadInt - dataRuntimeStatus.DaaScoreBookInt

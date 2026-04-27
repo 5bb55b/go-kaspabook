@@ -56,8 +56,62 @@ type responseTransactionType struct {
     Result *resultTransactionType `json:"result"`
 }
 
-// routeBookdaaScore ...
-// routeBookblueScore ...
+////////////////////////////////
+type resultVspcType struct {
+    Block *resultBlockType `json:"block"`
+    Transactions []*resultTransactionType `json:"transactions"`
+}
+type responseVspcType struct {
+    Message string `json:"message"`
+    Result []*resultVspcType `json:"result"`
+}
+
+////////////////////////////////
+func getBookVspc(c *fiber.Ctx, isBlueScore bool) (error) {
+    r := &responseVspcType{}
+    status, err := getBookStatus()
+    if err != nil {
+        r.Message = msgInternalError
+        return c.Status(503).JSON(r)
+    }
+    if status.StatusKaspad != "synced" {
+        r.Message = msgUnsynced
+        return c.Status(503).JSON(r)
+    }
+    score, err := filterUint(c.Params("score"))
+    if err != nil {
+        r.Message = "score invalid"
+        return c.Status(400).JSON(r)
+    }
+    count, _ := strconv.Atoi(c.Query("count", "10"))
+    prev := c.Query("prev", "")
+    getIndexVspcListByDaaScore := database.GetIndexVspcListByDaaScore
+    if isBlueScore {
+        getIndexVspcListByDaaScore = database.GetIndexVspcListByBlueScore
+    }
+    vspcList, blockDataMap, txDataMap, err := getIndexVspcListByDaaScore(score, count, prev=="1")
+    if err != nil {
+        r.Message = msgInternalError
+        return c.Status(503).JSON(r)
+    }
+    if len(vspcList) == 0 {
+        r.Message = msgSuccessful
+        return c.JSON(r)
+    }
+    r.Result = formatBookVspcList(vspcList, blockDataMap, txDataMap, prev=="1")
+    r.Message = msgSuccessful
+    return c.JSON(r)
+}
+
+////////////////////////////////
+func routeBookVspcDaaScore(c *fiber.Ctx) (error) {
+    return getBookVspc(c, false)
+}
+
+////////////////////////////////
+func routeBookVspcBlueScore(c *fiber.Ctx) (error) {
+    return getBookVspc(c, true)
+}
 
 ////////////////////////////////
 func routeBookBlock(c *fiber.Ctx) (error) {
@@ -65,21 +119,21 @@ func routeBookBlock(c *fiber.Ctx) (error) {
     status, err := getBookStatus()
     if err != nil {
         r.Message = msgInternalError
-        return c.Status(403).JSON(r)
+        return c.Status(503).JSON(r)
     }
     if status.StatusKaspad != "synced" {
         r.Message = msgUnsynced
-        return c.Status(403).JSON(r)
+        return c.Status(503).JSON(r)
     }
     hash, _ := filterHash(c.Params("hash"))
     if hash == "" {
         r.Message = "hash invalid"
-        return c.Status(403).JSON(r)
+        return c.Status(400).JSON(r)
     }
     blockData, err := database.GetIndexChainBlock(hash)
     if err != nil {
         r.Message = msgInternalError
-        return c.Status(403).JSON(r)
+        return c.Status(503).JSON(r)
     }
     if blockData == nil {
         r.Message = msgSuccessful
@@ -96,21 +150,21 @@ func routeBookTransaction(c *fiber.Ctx) (error) {
     status, err := getBookStatus()
     if err != nil {
         r.Message = msgInternalError
-        return c.Status(403).JSON(r)
+        return c.Status(503).JSON(r)
     }
     if status.StatusKaspad != "synced" {
         r.Message = msgUnsynced
-        return c.Status(403).JSON(r)
+        return c.Status(503).JSON(r)
     }
     txId, _ := filterHash(c.Params("txid"))
     if txId == "" {
         r.Message = "txId invalid"
-        return c.Status(403).JSON(r)
+        return c.Status(400).JSON(r)
     }
     txData, blockData, err := database.GetIndexAcceptedTransaction(txId)
     if err != nil {
         r.Message = msgInternalError
-        return c.Status(403).JSON(r)
+        return c.Status(503).JSON(r)
     }
     if txData == nil {
         r.Message = msgSuccessful
@@ -119,6 +173,29 @@ func routeBookTransaction(c *fiber.Ctx) (error) {
     r.Result = formatBookTransaction(txData, blockData)
     r.Message = msgSuccessful
     return c.JSON(r)
+}
+
+////////////////////////////////
+func formatBookVspcList(vspcDataList []*protobook.Vspc, blockDataMap map[string]*protobook.Block, txDataMap map[string]*protobook.Transaction, prev bool) ([]*resultVspcType) {
+    result := make([]*resultVspcType, len(vspcDataList))
+    for i, vspc := range vspcDataList {
+        block := blockDataMap[string(vspc.Hash)]
+        if block == nil {
+            continue
+        }
+        result[i] = &resultVspcType{
+            Block: formatBookBlock(block),
+            Transactions: make([]*resultTransactionType, len(vspc.TxIds)),
+        }
+        for j, txIdBin := range vspc.TxIds {
+            txData := txDataMap[string(txIdBin)]
+            if txData == nil {
+                continue
+            }
+            result[i].Transactions[j] = formatBookTransaction(txData, block)
+        }
+    }
+    return result
 }
 
 ////////////////////////////////

@@ -15,7 +15,7 @@ import (
 var json = jsoniter.ConfigCompatibleWithStandardLibrary
 
 ////////////////////////////////
-const Version = "1.01.260425"
+const Version = "1.01.260428"
 
 ////////////////////////////////
 type cmdConfig struct {
