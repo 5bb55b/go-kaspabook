@@ -20,7 +20,7 @@ var dataRuntimeStatus *database.DbRuntimeStatusType
 func Init(ctxRaw context.Context) (error) {
     var err error
     ctx = ctxRaw
-    grpcKaspa, err = GrpcNewConnection()
+    grpcKaspa, err = GrpcNewConnection(512*1024*1024)
     if err != nil {
         return err
     }
@@ -34,6 +34,9 @@ func Init(ctxRaw context.Context) (error) {
             return err
         }
         dataRuntimeStatus.ScannedBook = dagInfo.PruningPointHash
+    } else {
+        daaScoreBookInt, _ := strconv.ParseUint(dataRuntimeStatus.DaaScoreBook, 10, 64)
+        database.SetDaaScoreLastRocks(daaScoreBookInt)
     }
     dataRuntimeStatus.VersionBook = config.Version
     dataRuntimeStatus.Hysteresis = strconv.Itoa(config.Startup.Hysteresis)
@@ -48,9 +51,7 @@ func Run() {
         grpcKaspa.Close()
     }()
     if config.Rocksdb.GcLoop {
-        
-        // go func - compaction ...
-        
+        database.RunIndexCompactionLoop(ctx)
     }
     for {
         select {

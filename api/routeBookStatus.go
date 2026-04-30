@@ -3,12 +3,11 @@ package api
 
 import (
     "time"
-    "github.com/gofiber/fiber/v2"
     "kaspabook/database"
 )
 
 ////////////////////////////////
-type responseInfoType struct {
+type responseStatusType struct {
     Message string `json:"message"`
     Result *database.DbRuntimeStatusType `json:"result"`
 }
@@ -19,23 +18,6 @@ const cacheTimeoutInfo = 1000
 ////////////////////////////////
 var dataStatus database.DbRuntimeStatusType
 var cacheStateInfo cacheStateType
-
-////////////////////////////////
-func routeBookStatus(c *fiber.Ctx) (error) {
-    r := &responseInfoType{}
-    status, err := getBookStatus()
-    if err != nil {
-        r.Message = msgInternalError
-        return c.Status(503).JSON(r)
-    }
-    r.Result = status
-    if status.StatusKaspad != "synced" {
-        r.Message = msgUnsynced
-        return c.Status(503).JSON(r)
-    }
-    r.Message = msgSynced
-    return c.JSON(r)
-}
 
 ////////////////////////////////
 func getBookStatus() (*database.DbRuntimeStatusType, error) {

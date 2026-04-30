@@ -73,7 +73,7 @@ func main() {
     if (!down) {
         err := kaspa.Init(ctx)
         if err != nil {
-            slog.Info("kaspa.Init fatal.", "error", err.Error())
+            slog.Error("kaspa.Init fatal.", "error", err.Error())
             c <- syscall.SIGTERM
         } else {
             go func() {

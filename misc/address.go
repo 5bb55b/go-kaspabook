@@ -8,36 +8,93 @@ import (
 )
 
 ////////////////////////////////
-func ConvAddressToSpk(address string) (string, string) {
-    testnet := false
-    s := strings.Index(address, ":")
-    if s == -1 {
-        return "", ""
+func VerifyAddr(address string) (bool) {
+    _, spkType, kPub, testnet := ConvAddressToSpk(address)
+    if kPub == "" {
+        return false
     }
-    s ++
+    addressCheck := ""
+    if spkType == "ScriptHash" {
+        addressCheck = ConvKPubToP2sh(kPub, testnet)
+    } else {
+        addressCheck = ConvKPubToP2pk(kPub, testnet)
+    }
+    if addressCheck != address {
+        return false
+    }
+    return true
+}
+
+////////////////////////////////
+func ConvKPubToP2sh(kPub string, testnet bool) (string) {
+    lenKey := len(kPub)
+    if lenKey != 64 {
+        return ""
+    }
+    kPub = "08" + kPub
+    decoded, _ := hex.DecodeString(kPub)
+    kPub = string(decoded[:])
+    address := EncodeBech32(kPub, testnet)
+    if testnet {
+        address = "kaspatest:" + address
+    } else {
+        address = "kaspa:" + address
+    }
+    return address
+}
+
+////////////////////////////////
+func ConvKPubToP2pk(kPub string, testnet bool) (string) {
+    lenKey := len(kPub)
+    if lenKey == 64 {
+        kPub = "00" + kPub
+    } else if lenKey == 66 {
+        kPub = "01" + kPub
+    } else {
+        return ""
+    }
+    decoded, _ := hex.DecodeString(kPub)
+    kPub = string(decoded[:])
+    address := EncodeBech32(kPub, testnet)
+    if testnet {
+        address = "kaspatest:" + address
+    } else {
+        address = "kaspa:" + address
+    }
+    return address
+}
+
+////////////////////////////////
+func ConvAddressToSpk(address string) (string, string, string, bool) {
+    testnet := false
+    s := strings.Index(address, ":") + 1
+    if s == 0 {
+        return "", "", "", false
+    }
     if address[0:s] != "kaspa:" {
         testnet = true
     }
     kPub := hex.EncodeToString([]byte(DecodeBech32(address[s:], testnet)))
     if len(kPub) < 64 {
-        return "", ""
+        return "", "", "", false
     }
     ver := kPub[:2]
+    kPub = kPub[2:]
     spkType := ""
     spk := ""
     if ver == "00" {
         spkType = "PubKey"
-        spk = "20" + kPub[2:] + "ac"
+        spk = "20" + kPub + "ac"
     } else if ver == "01" {
         spkType = "PubKeyECDSA"
-        spk = "21" + kPub[2:] + "ab"
+        spk = "21" + kPub + "ab"
     } else if ver == "08" {
         spkType = "ScriptHash"
-        spk = "aa20" + kPub[2:] + "87"
+        spk = "aa20" + kPub + "87"
     } else {
-        return "", ""
+        return "", "", "", false
     }
-    return spk, spkType
+    return spk, spkType, kPub, testnet
 }
 
 ////////////////////////////////

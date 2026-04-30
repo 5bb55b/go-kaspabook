@@ -64,7 +64,8 @@ func initRocks() {
     C.rocksdb_options_set_create_missing_column_families(dbOpt, C.uchar(1))
     C.rocksdb_options_set_write_buffer_size(dbOpt, C.size_t(256*1024*1024))
     C.rocksdb_options_set_max_write_buffer_number(dbOpt, C.int(4))
-    C.rocksdb_options_set_max_background_compactions(dbOpt, C.int(4))
+    C.rocksdb_options_set_max_background_compactions(dbOpt, C.int(1))
+    C.rocksdb_options_set_max_background_flushes(dbOpt, C.int(2))
     C.rocksdb_options_set_prefix_extractor(dbOpt, C.rocksdb_slicetransform_create_fixed_prefix(C.size_t(8)))
     bbOpt = C.rocksdb_block_based_options_create()
     C.rocksdb_block_based_options_set_block_size(bbOpt, C.size_t(8*1024))
@@ -469,7 +470,11 @@ func txRollback(tx *C.rocksdb_transaction_t) (error) {
 func CompactCF(cf int) {
     dbBase := C.rocksdb_transactiondb_get_base_db(rocks)
     defer C.rocksdb_transactiondb_close_base_db(dbBase)
-    C.rocksdb_compact_range_cf(dbBase, cfHandleList[cf], nil, 0, nil, 0)
+    cOpt := C.rocksdb_compactoptions_create()
+    defer C.rocksdb_compactoptions_destroy(cOpt)
+    C.rocksdb_compactoptions_set_max_subcompactions(cOpt, C.int(1))
+    C.rocksdb_compactoptions_set_exclusive_manual_compaction(cOpt, 1)
+    C.rocksdb_compact_range_cf_opt(dbBase, cfHandleList[cf], cOpt, nil, 0, nil, 0)
 }
 
 ////////////////////////////////

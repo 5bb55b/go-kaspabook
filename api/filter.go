@@ -6,6 +6,7 @@ import (
     "strings"
     "strconv"
     "encoding/hex"
+    "kaspabook/misc"
 )
 
 ////////////////////////////////
@@ -37,4 +38,17 @@ func filterUint(value string) (uint64, error) {
         return 0, fmt.Errorf("invalid")
     }
     return valueUint, nil
+}
+
+////////////////////////////////
+func filterAddress(address string) (string, error) {
+    address = strings.TrimSpace(address)
+    address = strings.ToLower(address)
+    if address == "" {
+        return "", fmt.Errorf("invalid")
+    }
+    if !misc.VerifyAddr(address) {
+        return "", fmt.Errorf("invalid")
+    }
+    return address, nil
 }

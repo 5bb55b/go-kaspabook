@@ -975,10 +975,10 @@ type RpcUtxoEntry struct {
 	sizeCache     protoimpl.SizeCache
 	unknownFields protoimpl.UnknownFields
 
-	Amount          uint64                   `protobuf:"varint,1,opt,name=amount,proto3" json:"amount,omitempty"`
-	ScriptPublicKey *RpcScriptPublicKey      `protobuf:"bytes,2,opt,name=scriptPublicKey,proto3" json:"scriptPublicKey,omitempty"`
-	BlockDaaScore   uint64                   `protobuf:"varint,3,opt,name=blockDaaScore,proto3" json:"blockDaaScore,omitempty"`
-	IsCoinbase      bool                     `protobuf:"varint,4,opt,name=isCoinbase,proto3" json:"isCoinbase,omitempty"`
+	Amount          uint64                   `protobuf:"varint,1,opt,name=amount,proto3" json:"amount"`
+	ScriptPublicKey *RpcScriptPublicKey      `protobuf:"bytes,2,opt,name=scriptPublicKey,proto3" json:"scriptPublicKey"`
+	BlockDaaScore   uint64                   `protobuf:"varint,3,opt,name=blockDaaScore,proto3" json:"blockDaaScore"`
+	IsCoinbase      bool                     `protobuf:"varint,4,opt,name=isCoinbase,proto3" json:"isCoinbase"`
 	VerboseData     *RpcUtxoEntryVerboseData `protobuf:"bytes,5,opt,name=verboseData,proto3" json:"verboseData,omitempty"`
 }
 
@@ -1054,8 +1054,8 @@ type RpcUtxoEntryVerboseData struct {
 	sizeCache     protoimpl.SizeCache
 	unknownFields protoimpl.UnknownFields
 
-	ScriptPublicKeyType    string `protobuf:"bytes,5,opt,name=scriptPublicKeyType,proto3" json:"scriptPublicKeyType,omitempty"`
-	ScriptPublicKeyAddress string `protobuf:"bytes,6,opt,name=scriptPublicKeyAddress,proto3" json:"scriptPublicKeyAddress,omitempty"`
+	ScriptPublicKeyType    string `protobuf:"bytes,5,opt,name=scriptPublicKeyType,proto3" json:"scriptPublicKeyType"`
+	ScriptPublicKeyAddress string `protobuf:"bytes,6,opt,name=scriptPublicKeyAddress,proto3" json:"scriptPublicKeyAddress"`
 }
 
 func (x *RpcUtxoEntryVerboseData) Reset() {
@@ -1109,8 +1109,8 @@ type RpcScriptPublicKey struct {
 	sizeCache     protoimpl.SizeCache
 	unknownFields protoimpl.UnknownFields
 
-	Version         uint32 `protobuf:"varint,1,opt,name=version,proto3" json:"version,omitempty"`
-	ScriptPublicKey string `protobuf:"bytes,2,opt,name=scriptPublicKey,proto3" json:"scriptPublicKey,omitempty"`
+	Version         uint32 `protobuf:"varint,1,opt,name=version,proto3" json:"version"`
+	ScriptPublicKey string `protobuf:"bytes,2,opt,name=scriptPublicKey,proto3" json:"scriptPublicKey"`
 }
 
 func (x *RpcScriptPublicKey) Reset() {
@@ -1227,8 +1227,8 @@ type RpcOutpoint struct {
 	sizeCache     protoimpl.SizeCache
 	unknownFields protoimpl.UnknownFields
 
-	TransactionId string `protobuf:"bytes,1,opt,name=transactionId,proto3" json:"transactionId,omitempty"`
-	Index         uint32 `protobuf:"varint,2,opt,name=index,proto3" json:"index,omitempty"`
+	TransactionId string `protobuf:"bytes,1,opt,name=transactionId,proto3" json:"transactionId"`
+	Index         uint32 `protobuf:"varint,2,opt,name=index,proto3" json:"index"`
 }
 
 func (x *RpcOutpoint) Reset() {
@@ -4551,9 +4551,9 @@ type RpcUtxosByAddressesEntry struct {
 	sizeCache     protoimpl.SizeCache
 	unknownFields protoimpl.UnknownFields
 
-	Address   string        `protobuf:"bytes,1,opt,name=address,proto3" json:"address,omitempty"`
-	Outpoint  *RpcOutpoint  `protobuf:"bytes,2,opt,name=outpoint,proto3" json:"outpoint,omitempty"`
-	UtxoEntry *RpcUtxoEntry `protobuf:"bytes,3,opt,name=utxoEntry,proto3" json:"utxoEntry,omitempty"`
+	Address   string        `protobuf:"bytes,1,opt,name=address,proto3" json:"address"`
+	Outpoint  *RpcOutpoint  `protobuf:"bytes,2,opt,name=outpoint,proto3" json:"outpoint"`
+	UtxoEntry *RpcUtxoEntry `protobuf:"bytes,3,opt,name=utxoEntry,proto3" json:"utxoEntry"`
 }
 
 func (x *RpcUtxosByAddressesEntry) Reset() {
@@ -4974,8 +4974,8 @@ type RpcBalancesByAddressesEntry struct {
 	sizeCache     protoimpl.SizeCache
 	unknownFields protoimpl.UnknownFields
 
-	Address string    `protobuf:"bytes,1,opt,name=address,proto3" json:"address,omitempty"`
-	Balance uint64    `protobuf:"varint,2,opt,name=balance,proto3" json:"balance,omitempty"`
+	Address string    `protobuf:"bytes,1,opt,name=address,proto3" json:"address"`
+	Balance uint64    `protobuf:"varint,2,opt,name=balance,proto3" json:"balance"`
 	Error   *RPCError `protobuf:"bytes,1000,opt,name=error,proto3" json:"error,omitempty"`
 }
 

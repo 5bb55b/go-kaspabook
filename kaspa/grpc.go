@@ -29,11 +29,11 @@ type GrpcConnectionType struct {
 }
 
 ////////////////////////////////
-func GrpcNewConnection() (*GrpcConnectionType, error) {
+func GrpcNewConnection(maxCallRecvMsgSize int) (*GrpcConnectionType, error) {
     g := &GrpcConnectionType{}
     g.pending = make(map[uint64]chan *protowire.KaspadResponse, 256)
     g.closed = make(chan struct{})
-    err := g.connect()
+    err := g.connect(maxCallRecvMsgSize)
     if err != nil {
         return nil, err
     }
@@ -48,7 +48,7 @@ func (g *GrpcConnectionType) Close() {
 }
 
 ////////////////////////////////
-func (g *GrpcConnectionType) connect() (error) {
+func (g *GrpcConnectionType) connect(maxCallRecvMsgSize int) (error) {
     g.Lock()
     defer g.Unlock()
     if g.conn != nil {
@@ -63,7 +63,7 @@ func (g *GrpcConnectionType) connect() (error) {
         config.Kaspad.Grpc[g.index], 
         grpc.WithTransportCredentials(insecure.NewCredentials()), 
         grpc.WithBlock(), 
-        grpc.WithDefaultCallOptions(grpc.MaxCallRecvMsgSize(512*1024*1024)), 
+        grpc.WithDefaultCallOptions(grpc.MaxCallRecvMsgSize(maxCallRecvMsgSize)),
         grpc.WithKeepaliveParams(keepalive.ClientParameters{
             Time: 8 * time.Second,
             Timeout: 5 * time.Second,
@@ -86,7 +86,7 @@ func (g *GrpcConnectionType) connect() (error) {
         for {
             r, err := g.stream.Recv()
             if err != nil {
-                slog.Warn("kaspa.GrpcConnection.connect stream/Recv failed.", "error", err.Error())
+                slog.Warn("kaspa.GrpcConnection.connect stream/Recv ended.", "reason", err.Error())
                 return
             }
             if r.Id == 0 {
@@ -120,7 +120,7 @@ func (g *GrpcConnectionType) connect() (error) {
                             return
                         }
                         time.Sleep(3 * time.Second)
-                        err := g.connect()
+                        err := g.connect(maxCallRecvMsgSize)
                         if err != nil {
                             slog.Error("kaspa.GrpcConnection.connect failed.", "error", err.Error())
                             break
@@ -283,7 +283,66 @@ func (g *GrpcConnectionType) GetVirtualChainFromBlockV2(startHash string, count 
     return response, nil
 }
 
-// balance ...
-// utxo ...
+////////////////////////////////
+func (g *GrpcConnectionType) GetBalancesByAddresses(addressList []string) (*protowire.GetBalancesByAddressesResponseMessage, error) {
+    r, err := g.request(&protowire.KaspadRequest{Payload:&protowire.KaspadRequest_GetBalancesByAddressesRequest{GetBalancesByAddressesRequest:&protowire.GetBalancesByAddressesRequestMessage{
+        Addresses: addressList,
+    }}})
+    if err != nil {
+        return nil, err
+    }
+    response := r.GetGetBalancesByAddressesResponse()
+    if response == nil {
+        return nil, fmt.Errorf("nil balance")
+    } else if response.Error != nil && response.Error.Message != "" {
+        return nil, fmt.Errorf("%s", response.Error.Message)
+    }
+    return response, nil
+}
 
-// ...
+////////////////////////////////
+func (g *GrpcConnectionType) GetUtxosByAddresses(addressList []string) (*protowire.GetUtxosByAddressesResponseMessage, error) {
+    r, err := g.request(&protowire.KaspadRequest{Payload:&protowire.KaspadRequest_GetUtxosByAddressesRequest{GetUtxosByAddressesRequest:&protowire.GetUtxosByAddressesRequestMessage{
+        Addresses: addressList,
+    }}})
+    if err != nil {
+        return nil, err
+    }
+    response := r.GetGetUtxosByAddressesResponse()
+    if response == nil {
+        return nil, fmt.Errorf("nil utxo")
+    } else if response.Error != nil && response.Error.Message != "" {
+        return nil, fmt.Errorf("%s", response.Error.Message)
+    }
+    return response, nil
+}
+
+////////////////////////////////
+func (g *GrpcConnectionType) SubmitTransaction(txData *protowire.RpcTransaction) (*protowire.SubmitTransactionResponseMessage, error) {
+    r, err := g.request(&protowire.KaspadRequest{Payload:&protowire.KaspadRequest_SubmitTransactionRequest{SubmitTransactionRequest:&protowire.SubmitTransactionRequestMessage{
+        Transaction: txData,
+    }}})
+    if err != nil {
+        return nil, err
+    }
+    response := r.GetSubmitTransactionResponse()
+    if response == nil {
+        return nil, fmt.Errorf("nil response")
+    }
+    return response, nil
+}
+
+////////////////////////////////
+func (g *GrpcConnectionType) SubmitTransactionReplacement(txData *protowire.RpcTransaction) (*protowire.SubmitTransactionReplacementResponseMessage, error) {
+    r, err := g.request(&protowire.KaspadRequest{Payload:&protowire.KaspadRequest_SubmitTransactionReplacementRequest{SubmitTransactionReplacementRequest:&protowire.SubmitTransactionReplacementRequestMessage{
+        Transaction: txData,
+    }}})
+    if err != nil {
+        return nil, err
+    }
+    response := r.GetSubmitTransactionReplacementResponse()
+    if response == nil {
+        return nil, fmt.Errorf("nil response")
+    }
+    return response, nil
+}
