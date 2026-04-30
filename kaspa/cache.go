@@ -15,10 +15,13 @@ type blockScoreType struct {
     Daa uint64
     Blue uint64
 }
+
 type cacheBlockScoreType struct {
     Index []string
     Score map[string]*blockScoreType
 }
+
+////////////////////////////////
 var cacheBlockScore cacheBlockScoreType
 
 ////////////////////////////////

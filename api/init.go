@@ -66,12 +66,20 @@ func Init(c chan os.Signal) {
             return c.SendStatus(500)
         }
         if c.Method() == "GET" && c.Path() == "/book/status" {
+            status.TotalBlock = 0
+            status.TotalTransaction = 0
             r := &responseStatusType{ Result: status }
             if status.StatusKaspad != "synced" {
                 r.Message = msgUnsynced
                 return c.Status(503).JSON(r)
             }
-            r.Message = msgSynced
+            gap, _ := strconv.Atoi(status.GapBook)
+            hysteresis, _ := strconv.Atoi(status.Hysteresis)
+            if gap > hysteresis+300 {
+                r.Message = msgUnsynced
+            } else {
+                r.Message = msgSynced
+            }
             return c.JSON(r)
         } else if status.StatusKaspad != "synced" {
             r := &responseStatusType{ Message: msgUnsynced }

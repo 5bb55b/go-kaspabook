@@ -79,9 +79,9 @@ func formatBookVspcList(vspcDataList []*protobook.Vspc, blockDataMap map[string]
 
 ////////////////////////////////
 func formatBookBlock(blockData *protobook.Block) (*formatBlockType) {
-    
-    // if nil ...
-    
+    if blockData == nil {
+        return nil
+    }
     result := &formatBlockType{
         Hash: hex.EncodeToString(blockData.Hash),
         DaaScore: strconv.FormatUint(blockData.DaaScore,10),
@@ -95,20 +95,23 @@ func formatBookBlock(blockData *protobook.Block) (*formatBlockType) {
 
 ////////////////////////////////
 func formatBookTransaction(txData *protobook.Transaction, blockData *protobook.Block) (*formatTransactionType) {
-    
-    // if nil ...
-    
+    if txData == nil {
+        return nil
+    }
     result := &formatTransactionType{
         TxId: hex.EncodeToString(txData.TxId),
         TxHash: hex.EncodeToString(txData.TxHash),
         BlockHash: hex.EncodeToString(txData.BlockHash),
         BlockTime: strconv.FormatUint(txData.BlockTime,10),
-        AcceptedBlock: hex.EncodeToString(blockData.Hash),
-        AcceptedDaaScore: strconv.FormatUint(blockData.DaaScore,10),
-        AcceptedBlueScore: strconv.FormatUint(blockData.BlueScore,10),
-        AcceptedTime: strconv.FormatUint(blockData.Timestamp,10),
-        IsAccepted: "true",
+        IsAccepted: "false",
         Fee: "0",
+    }
+    if blockData != nil {
+        result.AcceptedBlock = hex.EncodeToString(blockData.Hash)
+        result.AcceptedDaaScore = strconv.FormatUint(blockData.DaaScore, 10)
+        result.AcceptedBlueScore = strconv.FormatUint(blockData.BlueScore, 10)
+        result.AcceptedTime = strconv.FormatUint(blockData.Timestamp, 10)
+        result.IsAccepted = "true"
     }
     amountIn := uint64(0)
     amountOut := uint64(0)

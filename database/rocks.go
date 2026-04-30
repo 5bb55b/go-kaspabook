@@ -15,6 +15,7 @@ import (
     "bytes"
     "unsafe"
     "runtime"
+    "os/exec"
     "sync/atomic"
     "golang.org/x/sync/errgroup"
     "kaspabook/config"
@@ -508,4 +509,15 @@ func doGetBatchCF(tx *C.rocksdb_transaction_t, cf int, keyList []string, fGet fu
         }
     }
     return time.Now().UnixMilli() - mtss, nil
+}
+
+////////////////////////////////
+func GetDiskUsage() (string, error) {
+    cmd := exec.Command("du", "-sh", config.Rocksdb.Path)
+    output, err := cmd.Output()
+    if err != nil {
+        return "", err
+    }
+    output = bytes.SplitN(output, []byte{9}, 2)[0]
+    return string(output), nil
 }

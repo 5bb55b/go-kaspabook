@@ -212,6 +212,8 @@ func ProcessIndexVspc(daaScoreListByRemoved []uint64, acceptedList []*protowire.
     status.DaaScoreBook = strconv.FormatUint(status.DaaScoreBookInt, 10)
     status.BlueScoreBook = strconv.FormatUint(*blockLast.BlueScore, 10)
     status.ScannedBook = *blockLast.Hash
+    status.TotalBlock += uint64(lenAdded)
+    status.TotalTransaction += uint64(lenTransactionTotal)
     gap := uint64(0)
     if status.DaaScoreKaspadInt > status.DaaScoreBookInt {
         gap = status.DaaScoreKaspadInt - status.DaaScoreBookInt

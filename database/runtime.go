@@ -30,6 +30,8 @@ type DbRuntimeStatusType struct {
     DaaScoreKaspadInt uint64 `json:"-"`
     DaaScoreBookInt uint64 `json:"-"`
     LenTransaction int `json:"-"`
+    TotalBlock uint64 `json:"totalBlock,omitempty"`
+    TotalTransaction uint64 `json:"totalTransaction,omitempty"`
 }
 
 ////////////////////////////////

@@ -13,19 +13,17 @@ import (
 ////////////////////////////////
 var countLoopSynced = int64(1)
 var countReorg = int64(0)
-var loopScan = 300
+var loopScan = 100
 
 ////////////////////////////////
 func scan() (bool) {
     mtss := time.Now().UnixMilli()
     // Some things to clean up.
     loopScan ++
-    if loopScan > 300 {
+    if loopScan > 100 {
         loopScan = 0
         database.ExpireIddkeys(dataRuntimeStatus.DaaScoreBookInt)
-
-        // dataRuntimeStatus.SizeBook ...
-        
+        dataRuntimeStatus.SizeBook, _ = database.GetDiskUsage()
     }
     // Get the synced info.
     serverInfo, err := grpcKaspa.GetServerInfo()
@@ -68,14 +66,27 @@ func scan() (bool) {
             Blue: *accepted.ChainBlockHeader.BlueScore,
         })
     }
+    mtssDb := time.Now().UnixMilli()
     dataRuntimeStatus, err = database.ProcessIndexVspc(daaScoreListByRemoved, vspc.ChainBlockAcceptedTransactions, dataRuntimeStatus)
     if err != nil {
         return sleepLog(3000, slog.Warn, "database.ProcessVspc failed, sleep 3s.", "error", err.Error())
     }
     expireCacheBlockScore(dataRuntimeStatus.DaaScoreBookInt)
     // Additional delay if synced.
-    mtsLoop := time.Now().UnixMilli() - mtss
-    slog.Info("explorer.scan", "lenAdded", lenAdded, "lenRemoved", lenRemoved, "lenTransaction", dataRuntimeStatus.LenTransaction, "mSecondLoop", mtsLoop, "reorg", strconv.FormatInt(countReorg*1000/countLoopSynced,10)+"pt", "statusKaspad", dataRuntimeStatus.StatusKaspad)
+    mtse := time.Now().UnixMilli()
+    mtsLoop := mtse - mtss
+    slog.Info(
+        "explorer.scan",
+        "lenAdded", lenAdded,
+        "lenRemoved", lenRemoved,
+        "lenTransaction", dataRuntimeStatus.LenTransaction,
+        "mSecondLoop", strconv.FormatInt(mtsLoop,10)+"/"+strconv.FormatInt(mtse-mtssDb,10),
+        "cacheBlock", strconv.Itoa(len(cacheBlockScore.Index))+"/"+strconv.Itoa(len(cacheBlockScore.Score)),
+        "reorg", strconv.FormatInt(countReorg*1000/countLoopSynced,10)+"pt",
+        "total", strconv.FormatUint(dataRuntimeStatus.TotalBlock,10)+"/"+strconv.FormatUint(dataRuntimeStatus.TotalTransaction,10),
+        "sizeBook", dataRuntimeStatus.SizeBook,
+        "statusKaspad", dataRuntimeStatus.StatusKaspad,
+    )
     gapInt := uint64(0)
     if dataRuntimeStatus.DaaScoreKaspadInt > dataRuntimeStatus.DaaScoreBookInt {
         gapInt = dataRuntimeStatus.DaaScoreKaspadInt - dataRuntimeStatus.DaaScoreBookInt
