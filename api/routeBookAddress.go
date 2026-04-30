@@ -34,7 +34,7 @@ func routeBookAddressTransactions(c fiber.Ctx) (error) {
     }
     rangeStart := uint64(0)
     if prev == "1" {
-        rangeStart, err = filterUint(c.Query(rangeBy, "18446744073709551615"))
+        rangeStart, err = filterUint(c.Query(rangeBy, "18446744073709551614"))
     } else {
         rangeStart, err = filterUint(c.Query(rangeBy, "0"))
     }
