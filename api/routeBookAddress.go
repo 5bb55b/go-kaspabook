@@ -21,7 +21,7 @@ func routeBookAddressTransactions(c fiber.Ctx) (error) {
         r.Message = "address invalid"
         return c.Status(400).JSON(r)
     }
-    count, _ := strconv.Atoi(c.Query("count", "10"))
+    count, _ := strconv.Atoi(c.Query("count", "50"))
     prev := c.Query("prev", "")
     rangeBy := "daascore"
     rangeByDaascore := c.Query("daascore")
@@ -48,16 +48,17 @@ func routeBookAddressTransactions(c fiber.Ctx) (error) {
     //} else if rangeBy == "timestamp" {
     //    getIndexAcceptedTransactionListByAddress = database.GetIndexAcceptedTransactionListByAddressTimestamp
     }
-    txDataList, daaScoreBeList, blockDataMap, err := getIndexAcceptedTransactionListByAddress(address, rangeStart, count, prev=="1")
+    txDataList, daaScoreBeList, blockDataMap, err := getIndexAcceptedTransactionListByAddress(address, rangeStart+1, count, prev=="1")
     if err != nil {
         r.Message = msgInternalError
         return c.Status(503).JSON(r)
     }
-    if len(txDataList) == 0 {
+    lenTxData := len(txDataList)
+    if lenTxData == 0 {
         r.Message = msgSuccessful
         return c.JSON(r)
     }
-    r.Result = make([]*formatTransactionType, len(txDataList))
+    r.Result = make([]*formatTransactionType, lenTxData)
     for i, txData := range txDataList {
         r.Result[i] = formatBookTransaction(txData, blockDataMap[daaScoreBeList[i]])
     }

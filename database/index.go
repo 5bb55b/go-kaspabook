@@ -513,9 +513,14 @@ func GetIndexAcceptedTransactionListByAddressDaaScore(address string, score uint
     daaScoreBeList := make([]string, 0, maxCount)
     txIdList := make([]string, 0, maxCount)
     txKeyList := make([]string, 0, maxCount)
-    err := seekCF(nil, cfIndex, keyStart, keyEnd, maxCount, prev, nil, func(i int, key []byte, val []byte) (bool, error) {
+    var daaScoreBeLast string
+    err := seekCF(nil, cfIndex, keyStart, keyEnd, 0, prev, nil, func(i int, key []byte, val []byte) (bool, error) {
         keyList := bytes.SplitN(key, []byte{95}, 3)
         daaScoreBe := string(keyList[2][:8])
+        if i >= maxCount && daaScoreBeLast != daaScoreBe {
+            return false, nil
+        }
+        daaScoreBeLast = daaScoreBe
         daaScoreBeMap[daaScoreBe] = struct{}{}
         daaScoreBeList = append(daaScoreBeList, daaScoreBe)
         txId := string(keyList[2][9:])
