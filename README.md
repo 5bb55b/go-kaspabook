@@ -2,7 +2,7 @@
 
 ---
 
-### Operating Environment
+### Environment
 
 OS: 64-bit Linux (Ubuntu24.04 recommended).
 
@@ -24,7 +24,9 @@ A usable kaspa node for gRPC is required.
 
 <pre>./kaspabook --kaspad-grpc=127.0.0.1:16110</pre>
 
-#### Show startup parameters:
+---
+
+### Show startup parameters:
 
 <pre>
 ./kaspabook --help
