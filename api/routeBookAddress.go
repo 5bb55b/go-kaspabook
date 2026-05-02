@@ -48,7 +48,7 @@ func routeBookAddressTransactions(c fiber.Ctx) (error) {
     //} else if rangeBy == "timestamp" {
     //    getIndexAcceptedTransactionListByAddress = database.GetIndexAcceptedTransactionListByAddressTimestamp
     }
-    txDataList, daaScoreBeList, blockDataMap, err := getIndexAcceptedTransactionListByAddress(address, rangeStart+1, count, prev=="1")
+    txDataList, daaScoreBeList, blockDataMap, err := getIndexAcceptedTransactionListByAddress(address, rangeStart, count, prev=="1")
     if err != nil {
         r.Message = msgInternalError
         return c.Status(503).JSON(r)
