@@ -1,6 +1,6 @@
 ## Lightweight REST API with indexed Kaspa
 
-<br>
+---
 
 ### Operating Environment
 
@@ -8,7 +8,7 @@ OS: 64-bit Linux (Ubuntu24.04 recommended).
 
 HW: 4 Cores, 8GB RAM, 300GB SSD at least.
 
-<br>
+---
 
 ### Build the binary
 
@@ -16,7 +16,7 @@ Compile in the project directory.
 
 <pre>go build</pre>
 
-<br>
+---
 
 ### Run using binary
 
@@ -51,7 +51,7 @@ Help Options:
   -h, --help          Show this help message
 </pre>
 
-<br>
+---
 
 ### API Reference
 
