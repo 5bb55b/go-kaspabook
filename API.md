@@ -17,7 +17,7 @@ All successful and error responses are JSON.
 
 ### Common Response Shape
 
-Most endpoints return:
+Most endpoints return the following structure:
 
 ```json
 {
@@ -26,377 +26,35 @@ Most endpoints return:
 }
 ```
 
-### Common `message` Values
-
-- `synced`: backend and index status are considered synchronized
-- `unsynced`: backend is not ready or index lag is too large
-- `successful`: request completed successfully
-- `failed`: request completed but logical submission failed
-- `internal error`: internal indexed-data query failed
-- `kaspad error`: Kaspa gRPC request failed
-- `data expired`: reserved message constant in codebase
-- `not reached`: reserved message constant in codebase
-
-### Global Rules
-
-- `GET /book/status` is always allowed
-- all other endpoints return `503` with `message: "unsynced"` when Kaspa is not synced
-- unmatched routes return `404`
-
----
-
-## Shared Response Data Structures
-
-## Block Object
-
-Used by:
-
-- `GET /book/blocks/{hash}`
-- `GET /book/vspcs/daascore/{score}`
-- `GET /book/vspcs/bluescore/{score}`
-
-```json
-{
-  "hash": "string",
-  "daaScore": "string",
-  "blueScore": "string",
-  "timestamp": "string",
-  "acceptedIdMerkleRoot": "string",
-  "isChainBlock": "string"
-}
-```
-
-### Fields
-
-| Field | Type | Meaning |
-|------|------|---------|
-| `hash` | string | Block hash, hex-encoded |
-| `daaScore` | string | DAA score of the block |
-| `blueScore` | string | Blue score of the block |
-| `timestamp` | string | Block timestamp as a numeric string |
-| `acceptedIdMerkleRoot` | string | Accepted transaction ID merkle root, hex-encoded |
-| `isChainBlock` | string | Whether the block is treated as a chain block; currently always formatted as `"true"` |
-
----
-
-## Transaction Input Object
-
-Used inside transaction responses.
-
-```json
-{
-  "prevTxId": "string",
-  "prevTxIndex": "string",
-  "address": "string",
-  "amount": "string",
-  "spk": "string",
-  "spkType": "string"
-}
-```
-
-### Fields
-
-| Field | Type | Meaning |
-|------|------|---------|
-| `prevTxId` | string | Previous transaction ID being spent, hex-encoded |
-| `prevTxIndex` | string | Output index in the previous transaction |
-| `address` | string | Source Kaspa address associated with the consumed UTXO |
-| `amount` | string | Input amount |
-| `spk` | string | Script public key derived from the address |
-| `spkType` | string | Script public key type derived from the address |
-
----
-
-## Transaction Output Object
-
-Used inside transaction responses.
-
-```json
-{
-  "address": "string",
-  "amount": "string",
-  "spk": "string",
-  "spkType": "string"
-}
-```
-
-### Fields
-
-| Field | Type | Meaning |
-|------|------|---------|
-| `address` | string | Destination Kaspa address |
-| `amount` | string | Output amount |
-| `spk` | string | Script public key derived from the address |
-| `spkType` | string | Script public key type derived from the address |
-
----
-
-## Transaction Object
-
-Used by:
-
-- `GET /book/transactions/{txid}`
-- `GET /book/addresses/{address}/transactions`
-- VSPC transaction lists
-
-```json
-{
-  "txId": "string",
-  "txHash": "string",
-  "inputs": [],
-  "outputs": [],
-  "fee": "string",
-  "blockHash": "string",
-  "blockTime": "string",
-  "acceptedBlock": "string",
-  "acceptedDaaScore": "string",
-  "acceptedBlueScore": "string",
-  "acceptedTime": "string",
-  "isAccepted": "string"
-}
-```
-
-### Fields
-
-| Field | Type | Meaning |
-|------|------|---------|
-| `txId` | string | Transaction ID, hex-encoded |
-| `txHash` | string | Transaction hash, hex-encoded |
-| `inputs` | array | List of transaction inputs |
-| `outputs` | array | List of transaction outputs |
-| `fee` | string | Calculated fee = total input amount - total output amount, if non-negative |
-| `blockHash` | string | Block hash originally associated with the transaction record |
-| `blockTime` | string | Block time associated with the transaction record |
-| `acceptedBlock` | string | Accepting block hash, if the transaction is accepted |
-| `acceptedDaaScore` | string | DAA score of the accepting block |
-| `acceptedBlueScore` | string | Blue score of the accepting block |
-| `acceptedTime` | string | Timestamp of the accepting block |
-| `isAccepted` | string | `"true"` if accepted block data is present, otherwise `"false"` |
-
----
-
-## VSPC Object
-
-Used by:
-
-- `GET /book/vspcs/daascore/{score}`
-- `GET /book/vspcs/bluescore/{score}`
-
-```json
-{
-  "block": {},
-  "transactions": []
-}
-```
-
-### Fields
-
-| Field | Type | Meaning |
-|------|------|---------|
-| `block` | object | Block metadata for this VSPC entry |
-| `transactions` | array | Transactions associated with the block in this VSPC result |
-
----
-
-## Status Object
-
-Used by:
-
-- `GET /book/status`
-
-```json
-{
-  "versionKaspad": "string",
-  "daaScoreKaspad": "string",
-  "statusKaspad": "string",
-  "versionBook": "string",
-  "daaScoreBook": "string",
-  "blueScoreBook": "string",
-  "scannedBook": "string",
-  "gapBook": "string",
-  "sizeBook": "string",
-  "network": "string",
-  "hysteresis": "string",
-  "dtlIndex": "string",
-  "totalBlock": 0,
-  "totalTransaction": 0
-}
-```
-
-### Fields
-
-| Field | Type | Meaning |
-|------|------|---------|
-| `versionKaspad` | string | Version of the upstream kaspad node |
-| `daaScoreKaspad` | string | Current kaspad DAA score |
-| `statusKaspad` | string | Current kaspad sync/runtime status |
-| `versionBook` | string | Version of the local indexed service/book |
-| `daaScoreBook` | string | Indexed book DAA score |
-| `blueScoreBook` | string | Indexed book blue score |
-| `scannedBook` | string | Internal scanned progress marker for the book index |
-| `gapBook` | string | Gap between kaspad and indexed book progress |
-| `sizeBook` | string | Indexed database size or size-related runtime value |
-| `network` | string | Network name, such as mainnet/testnet/devnet/simnet |
-| `hysteresis` | string | Configured hysteresis threshold |
-| `dtlIndex` | string | Indexed data lifetime configuration |
-| `totalBlock` | integer | Total block count; current `/book/status` handler forces this to `0` before response |
-| `totalTransaction` | integer | Total transaction count; current `/book/status` handler forces this to `0` before response |
-
----
-
-## Balance Entry Object
-
-Used by:
-
-- `GET /kaspad/addresses/{address}/balance`
-
-```json
-{
-  "address": "string",
-  "balance": 0,
-  "error": {}
-}
-```
-
-### Fields
-
-| Field | Type | Meaning |
-|------|------|---------|
-| `address` | string | Queried Kaspa address |
-| `balance` | uint64 | Current balance for the address |
-| `error` | object/null | Per-entry RPC error from kaspad, if any |
-
----
-
-## UTXO Entry Object
-
-Used by:
-
-- `GET /kaspad/addresses/{address}/utxos`
-
-```json
-{
-  "address": "string",
-  "outpoint": {},
-  "utxoEntry": {}
-}
-```
-
-### Fields
-
-| Field | Type | Meaning |
-|------|------|---------|
-| `address` | string | Kaspa address owning this UTXO |
-| `outpoint` | object | Reference to the transaction output being spent later |
-| `utxoEntry` | object | Details of the UTXO itself |
-
-### `outpoint` Fields
-
-```json
-{
-  "transactionId": "string",
-  "index": 0
-}
-```
-
-| Field | Type | Meaning |
-|------|------|---------|
-| `transactionId` | string | Transaction ID containing the output |
-| `index` | uint32 | Output index in the transaction |
-
-### `utxoEntry` Fields
-
-```json
-{
-  "amount": 0,
-  "scriptPublicKey": {},
-  "blockDaaScore": 0,
-  "isCoinbase": false,
-  "verboseData": {}
-}
-```
-
-| Field | Type | Meaning |
-|------|------|---------|
-| `amount` | uint64 | UTXO amount |
-| `scriptPublicKey` | object | Raw script public key data |
-| `blockDaaScore` | uint64 | DAA score of the block containing this UTXO |
-| `isCoinbase` | bool | Whether this UTXO originated from a coinbase transaction |
-| `verboseData` | object/null | Human-readable script metadata |
-
-### `scriptPublicKey` Fields
-
-```json
-{
-  "version": 0,
-  "scriptPublicKey": "string"
-}
-```
-
-| Field | Type | Meaning |
-|------|------|---------|
-| `version` | uint32 | Script public key version |
-| `scriptPublicKey` | string | Script public key bytes/content |
-
-### `verboseData` Fields
-
-```json
-{
-  "scriptPublicKeyType": "string",
-  "scriptPublicKeyAddress": "string"
-}
-```
-
-| Field | Type | Meaning |
-|------|------|---------|
-| `scriptPublicKeyType` | string | Script type |
-| `scriptPublicKeyAddress` | string | Decoded address for the script |
-
----
-
-## Submit Transaction Response Object
-
-Used by:
-
-- `POST /kaspad/transactions`
-
-```json
-{
-  "transactionId": "string",
-  "error": {}
-}
-```
-
-### Fields
-
-| Field | Type | Meaning |
-|------|------|---------|
-| `transactionId` | string | Submitted transaction ID |
-| `error` | object/null | RPC-level logical error returned by kaspad |
-
----
-
-## Submit Transaction Replacement Response Object
-
-Used by:
-
-- `POST /kaspad/transactions/rbf`
-
-```json
-{
-  "transactionId": "string",
-  "replacedTransaction": {},
-  "error": {}
-}
-```
-
-### Fields
-
-| Field | Type | Meaning |
-|------|------|---------|
-| `transactionId` | string | Submitted replacement transaction ID |
-| `replacedTransaction` | object/null | Previous transaction replaced in the mempool |
-| `error` | object/null | RPC-level logical error returned by kaspad |
+Typical `message` values found in the code:
+
+- `synced`
+- `unsynced`
+- `successful`
+- `failed`
+- `internal error`
+- `kaspad error`
+- `data expired`
+- `not reached`
+
+### Global Middleware Rules
+
+The server applies the following behavior globally:
+
+- CORS:
+  - `Access-Control-Allow-Origin: *`
+  - `Access-Control-Allow-Methods: GET`
+  - `Access-Control-Allow-Headers: Origin, X-Requested-With, Content-Type, Accept`
+- Request timeout is controlled by server config
+- Request rate/concurrency limiting is enabled
+- Panic recovery is enabled
+- Any route other than `GET /book/status` will return `503` with message `unsynced` if the upstream Kaspa node is not synced
+
+### Not Found
+
+Any unmatched route returns:
+
+- HTTP `404`
 
 ---
 
@@ -404,120 +62,264 @@ Used by:
 
 ## GET /book/status
 
-Returns synchronization and runtime status.
+Returns the current API/index synchronization status.
+
+### Description
+
+This is the only route that remains accessible even when the Kaspa backend is unsynced.
 
 ### Response
+
+- `200 OK` when status is available
+- `503 Service Unavailable` when Kaspad is not synced
+
+### Example Response
 
 ```json
 {
   "message": "synced",
   "result": {
-    "versionKaspad": "string",
-    "daaScoreKaspad": "string",
-    "statusKaspad": "string",
-    "versionBook": "string",
-    "daaScoreBook": "string",
-    "blueScoreBook": "string",
-    "scannedBook": "string",
-    "gapBook": "string",
-    "sizeBook": "string",
-    "network": "string",
-    "hysteresis": "string",
-    "dtlIndex": "string",
-    "totalBlock": 0,
-    "totalTransaction": 0
+    "versionKaspad": "x.y.z",
+    "daaScoreKaspad": "123456",
+    "statusKaspad": "synced",
+    "versionBook": "x.y.z",
+    "daaScoreBook": "123450",
+    "blueScoreBook": "123440",
+    "scannedBook": "123450",
+    "gapBook": "6",
+    "sizeBook": "123456789",
+    "network": "mainnet",
+    "hysteresis": "100",
+    "dtlIndex": "86400000"
   }
 }
 ```
 
-### Field Meaning
+### Result Field Definitions
 
-- `message`: overall sync state returned by the API
-- `result`: status object described above
+| Field | Type | Meaning |
+|------|------|---------|
+| `versionKaspad` | string | Version of the connected Kaspad node |
+| `daaScoreKaspad` | string | Current DAA score reported by Kaspad |
+| `statusKaspad` | string | Sync state of Kaspad, such as `synced` |
+| `versionBook` | string | Version of the local indexed book data |
+| `daaScoreBook` | string | Current indexed DAA score in the local book |
+| `blueScoreBook` | string | Current indexed blue score in the local book |
+| `scannedBook` | string | Indexed/scanned progress indicator for the book |
+| `gapBook` | string | Gap between Kaspad state and indexed book state |
+| `sizeBook` | string | Size of indexed book data |
+| `network` | string | Network name, such as `mainnet`, `testnet`, etc. |
+| `hysteresis` | string | Configured hysteresis threshold |
+| `dtlIndex` | string | Configured index data lifetime value |
+
+### Notes
+
+- If `GapBook > Hysteresis + 300`, the endpoint returns `"message": "unsynced"` even if `StatusKaspad` is `"synced"`.
 
 ---
 
 ## GET /book/blocks/{hash}
 
-Returns a single indexed block.
+Returns indexed block details by block hash.
 
-### Response
+### Path Parameters
+
+| Name | Type | Required | Description |
+|------|------|----------|-------------|
+| `hash` | string | Yes | Block hash |
+
+### Success Response
 
 ```json
 {
   "message": "successful",
   "result": {
-    "hash": "string",
-    "daaScore": "string",
-    "blueScore": "string",
-    "timestamp": "string",
-    "acceptedIdMerkleRoot": "string",
-    "isChainBlock": "string"
+    "hash": "block hash",
+    "daaScore": "123456",
+    "blueScore": "123450",
+    "timestamp": "1710000000",
+    "acceptedIdMerkleRoot": "merkle root hex",
+    "isChainBlock": "true"
   }
 }
 ```
 
-### Field Meaning
+### Result Field Definitions
 
-- `message`: request result status
-- `result.hash`: block hash
-- `result.daaScore`: DAA score
-- `result.blueScore`: blue score
-- `result.timestamp`: block timestamp
-- `result.acceptedIdMerkleRoot`: accepted transaction ID merkle root
-- `result.isChainBlock`: chain block indicator
+| Field | Type | Meaning |
+|------|------|---------|
+| `hash` | string | Block hash in hex format |
+| `daaScore` | string | DAA score of the block |
+| `blueScore` | string | Blue score of the block |
+| `timestamp` | string | Block timestamp |
+| `acceptedIdMerkleRoot` | string | Accepted ID merkle root in hex format |
+| `isChainBlock` | string | Whether the block is treated as a chain block; current formatter sets this to `"true"` |
+
+### Empty Result Response
+
+If no block is found:
+
+```json
+{
+  "message": "successful",
+  "result": null
+}
+```
+
+### Error Responses
+
+#### Invalid Hash
+
+- HTTP `400`
+
+```json
+{
+  "message": "hash invalid",
+  "result": null
+}
+```
+
+#### Internal Error
+
+- HTTP `503`
+
+```json
+{
+  "message": "internal error",
+  "result": null
+}
+```
 
 ---
 
 ## GET /book/transactions/{txid}
 
-Returns a single indexed transaction.
+Returns indexed transaction details by transaction ID.
 
-### Response
+### Path Parameters
+
+| Name | Type | Required | Description |
+|------|------|----------|-------------|
+| `txid` | string | Yes | Transaction hash |
+
+### Success Response
 
 ```json
 {
   "message": "successful",
   "result": {
-    "txId": "string",
-    "txHash": "string",
+    "txId": "transaction id",
+    "txHash": "transaction hash",
     "inputs": [],
     "outputs": [],
-    "fee": "string",
-    "blockHash": "string",
-    "blockTime": "string",
-    "acceptedBlock": "string",
-    "acceptedDaaScore": "string",
-    "acceptedBlueScore": "string",
-    "acceptedTime": "string",
-    "isAccepted": "string"
+    "fee": "0",
+    "blockHash": "block hash",
+    "blockTime": "1710000000",
+    "acceptedBlock": "accepting block hash",
+    "acceptedDaaScore": "123456",
+    "acceptedBlueScore": "123450",
+    "acceptedTime": "1710000001",
+    "isAccepted": "true"
   }
 }
 ```
 
-### Field Meaning
+### Result Field Definitions
 
-- `message`: request result status
-- `result.txId`: transaction ID
-- `result.txHash`: transaction hash
-- `result.inputs`: consumed previous outputs
-- `result.outputs`: newly created outputs
-- `result.fee`: transaction fee
-- `result.blockHash`: source block hash associated with transaction record
-- `result.blockTime`: source block time associated with transaction record
-- `result.acceptedBlock`: block that accepted this transaction
-- `result.acceptedDaaScore`: accepting block DAA score
-- `result.acceptedBlueScore`: accepting block blue score
-- `result.acceptedTime`: accepting block timestamp
-- `result.isAccepted`: whether accepted block metadata is present
+| Field | Type | Meaning |
+|------|------|---------|
+| `txId` | string | Transaction ID in hex |
+| `txHash` | string | Transaction hash in hex |
+| `inputs` | array | Transaction input list |
+| `outputs` | array | Transaction output list |
+| `fee` | string | Computed fee as `sum(inputs) - sum(outputs)` when available |
+| `blockHash` | string | Original block hash recorded on the transaction |
+| `blockTime` | string | Original block timestamp recorded on the transaction |
+| `acceptedBlock` | string | Hash of the block that accepted this transaction |
+| `acceptedDaaScore` | string | DAA score of the accepting block |
+| `acceptedBlueScore` | string | Blue score of the accepting block |
+| `acceptedTime` | string | Timestamp of the accepting block |
+| `isAccepted` | string | `"true"` if an accepting block is known, otherwise `"false"` |
+
+### Input Object Field Definitions
+
+Each item in `inputs` contains:
+
+| Field | Type | Meaning |
+|------|------|---------|
+| `prevTxId` | string | Previous transaction ID referenced by this input |
+| `prevTxIndex` | string | Output index referenced from the previous transaction |
+| `address` | string | Address inferred/stored for the input |
+| `amount` | string | Input amount |
+| `spk` | string | Script public key derived from the address |
+| `spkType` | string | Script public key type derived from the address |
+
+### Output Object Field Definitions
+
+Each item in `outputs` contains:
+
+| Field | Type | Meaning |
+|------|------|---------|
+| `address` | string | Recipient/output address |
+| `amount` | string | Output amount |
+| `spk` | string | Script public key derived from the output address |
+| `spkType` | string | Script public key type derived from the output address |
+
+### Empty Result Response
+
+If the transaction is not found:
+
+```json
+{
+  "message": "successful",
+  "result": null
+}
+```
+
+### Error Responses
+
+#### Invalid Transaction ID
+
+- HTTP `400`
+
+```json
+{
+  "message": "txId invalid",
+  "result": null
+}
+```
+
+#### Internal Error
+
+- HTTP `503`
+
+```json
+{
+  "message": "internal error",
+  "result": null
+}
+```
 
 ---
 
 ## GET /book/vspcs/daascore/{score}
 
-Returns VSPC entries ordered by DAA score.
+Returns indexed VSPC records using DAA score ordering.
 
-### Response
+### Path Parameters
+
+| Name | Type | Required | Description |
+|------|------|----------|-------------|
+| `score` | uint64 | Yes | Starting DAA score |
+
+### Query Parameters
+
+| Name | Type | Required | Default | Description |
+|------|------|----------|---------|-------------|
+| `count` | integer | No | `10` | Number of records to return |
+| `prev` | string | No | `""` | Use `"1"` to paginate backward |
+
+### Success Response
 
 ```json
 {
@@ -525,27 +327,27 @@ Returns VSPC entries ordered by DAA score.
   "result": [
     {
       "block": {
-        "hash": "string",
-        "daaScore": "string",
-        "blueScore": "string",
-        "timestamp": "string",
-        "acceptedIdMerkleRoot": "string",
-        "isChainBlock": "string"
+        "hash": "block hash",
+        "daaScore": "123456",
+        "blueScore": "123450",
+        "timestamp": "1710000000",
+        "acceptedIdMerkleRoot": "hex",
+        "isChainBlock": "true"
       },
       "transactions": [
         {
-          "txId": "string",
-          "txHash": "string",
+          "txId": "transaction id",
+          "txHash": "transaction hash",
           "inputs": [],
           "outputs": [],
-          "fee": "string",
-          "blockHash": "string",
-          "blockTime": "string",
-          "acceptedBlock": "string",
-          "acceptedDaaScore": "string",
-          "acceptedBlueScore": "string",
-          "acceptedTime": "string",
-          "isAccepted": "string"
+          "fee": "0",
+          "blockHash": "block hash",
+          "blockTime": "1710000000",
+          "acceptedBlock": "accepting block hash",
+          "acceptedDaaScore": "123456",
+          "acceptedBlueScore": "123450",
+          "acceptedTime": "1710000000",
+          "isAccepted": "true"
         }
       ]
     }
@@ -553,148 +355,429 @@ Returns VSPC entries ordered by DAA score.
 }
 ```
 
-### Field Meaning
+### Result Item Field Definitions
 
-- `message`: request result status
-- `result[].block`: block metadata for the VSPC item
-- `result[].transactions`: transactions associated with that VSPC block
+Each item in `result` contains:
+
+| Field | Type | Meaning |
+|------|------|---------|
+| `block` | object | The VSPC-related block information |
+| `transactions` | array | Transactions associated with that VSPC block |
+
+### `block` Field Definitions
+
+| Field | Type | Meaning |
+|------|------|---------|
+| `hash` | string | Block hash in hex |
+| `daaScore` | string | Block DAA score |
+| `blueScore` | string | Block blue score |
+| `timestamp` | string | Block timestamp |
+| `acceptedIdMerkleRoot` | string | Accepted ID merkle root in hex |
+| `isChainBlock` | string | Whether the block is treated as a chain block |
+
+### `transactions` Item Field Definitions
+
+The structure is the same as in `GET /book/transactions/{txid}`:
+
+- `txId`
+- `txHash`
+- `inputs`
+- `outputs`
+- `fee`
+- `blockHash`
+- `blockTime`
+- `acceptedBlock`
+- `acceptedDaaScore`
+- `acceptedBlueScore`
+- `acceptedTime`
+- `isAccepted`
+
+See that section for detailed field meanings.
+
+### Empty Result Response
+
+```json
+{
+  "message": "successful",
+  "result": null
+}
+```
+
+### Error Responses
+
+#### Invalid Score
+
+- HTTP `400`
+
+```json
+{
+  "message": "score invalid",
+  "result": null
+}
+```
+
+#### Internal Error
+
+- HTTP `503`
+
+```json
+{
+  "message": "internal error",
+  "result": null
+}
+```
 
 ---
 
 ## GET /book/vspcs/bluescore/{score}
 
-Returns VSPC entries ordered by blue score.
+Returns indexed VSPC records using blue score ordering.
 
-### Response Structure
+### Path Parameters
 
-Same as `GET /book/vspcs/daascore/{score}`.
+| Name | Type | Required | Description |
+|------|------|----------|-------------|
+| `score` | uint64 | Yes | Starting blue score |
 
-### Field Meaning
+### Query Parameters
 
-Same as above.
+| Name | Type | Required | Default | Description |
+|------|------|----------|---------|-------------|
+| `count` | integer | No | `10` | Number of records to return |
+| `prev` | string | No | `""` | Use `"1"` to paginate backward |
 
----
-
-## GET /book/addresses/{address}/transactions
-
-Returns transactions associated with a specific address.
-
-### Response
+### Success Response
 
 ```json
 {
   "message": "successful",
   "result": [
     {
-      "txId": "string",
-      "txHash": "string",
-      "inputs": [
+      "block": {
+        "hash": "block hash",
+        "daaScore": "123456",
+        "blueScore": "123450",
+        "timestamp": "1710000000",
+        "acceptedIdMerkleRoot": "hex",
+        "isChainBlock": "true"
+      },
+      "transactions": [
         {
-          "prevTxId": "string",
-          "prevTxIndex": "string",
-          "address": "string",
-          "amount": "string",
-          "spk": "string",
-          "spkType": "string"
+          "txId": "transaction id",
+          "txHash": "transaction hash",
+          "inputs": [],
+          "outputs": [],
+          "fee": "0",
+          "blockHash": "block hash",
+          "blockTime": "1710000000",
+          "acceptedBlock": "accepting block hash",
+          "acceptedDaaScore": "123456",
+          "acceptedBlueScore": "123450",
+          "acceptedTime": "1710000000",
+          "isAccepted": "true"
         }
-      ],
-      "outputs": [
-        {
-          "address": "string",
-          "amount": "string",
-          "spk": "string",
-          "spkType": "string"
-        }
-      ],
-      "fee": "string",
-      "blockHash": "string",
-      "blockTime": "string",
-      "acceptedBlock": "string",
-      "acceptedDaaScore": "string",
-      "acceptedBlueScore": "string",
-      "acceptedTime": "string",
-      "isAccepted": "string"
+      ]
     }
   ]
 }
 ```
 
-### Field Meaning
+### Result Item Field Definitions
 
-- `message`: request result status
-- `result[]`: formatted transaction objects for the address history
+Each item in `result` contains:
 
-#### `inputs[]`
+| Field | Type | Meaning |
+|------|------|---------|
+| `block` | object | The VSPC-related block information |
+| `transactions` | array | Transactions associated with that VSPC block |
 
-- `prevTxId`: previous transaction ID referenced by this input
-- `prevTxIndex`: output index referenced by this input
-- `address`: address associated with the spent input
-- `amount`: spent amount
-- `spk`: derived script public key
-- `spkType`: derived script type
+### `block` Field Definitions
 
-#### `outputs[]`
+| Field | Type | Meaning |
+|------|------|---------|
+| `hash` | string | Block hash in hex |
+| `daaScore` | string | Block DAA score |
+| `blueScore` | string | Block blue score |
+| `timestamp` | string | Block timestamp |
+| `acceptedIdMerkleRoot` | string | Accepted ID merkle root in hex |
+| `isChainBlock` | string | Whether the block is treated as a chain block |
 
-- `address`: recipient address
-- `amount`: output amount
-- `spk`: derived script public key
-- `spkType`: derived script type
+### `transactions` Item Field Definitions
 
----
+The structure is the same as in `GET /book/transactions/{txid}`.
 
-## GET /kaspad/addresses/{address}/balance
-
-Returns the balance for one address.
-
-### Response
+### Empty Result Response
 
 ```json
 {
   "message": "successful",
-  "result": {
-    "address": "string",
-    "balance": 0,
-    "error": {}
-  }
+  "result": null
 }
 ```
 
-### Field Meaning
+### Error Responses
 
-- `message`: request result status
-- `result.address`: queried address
-- `result.balance`: current balance
-- `result.error`: per-entry backend error, if present
+#### Invalid Score
+
+- HTTP `400`
+
+```json
+{
+  "message": "score invalid",
+  "result": null
+}
+```
+
+#### Internal Error
+
+- HTTP `503`
+
+```json
+{
+  "message": "internal error",
+  "result": null
+}
+```
 
 ---
 
-## GET /kaspad/addresses/{address}/utxos
+## GET /book/addresses/{address}/transactions
 
-Returns all UTXOs for one address.
+Returns indexed transactions associated with an address.
 
-### Response
+### Path Parameters
+
+| Name | Type | Required | Description |
+|------|------|----------|-------------|
+| `address` | string | Yes | Kaspa address |
+
+### Query Parameters
+
+| Name | Type | Required | Default | Description |
+|------|------|----------|---------|-------------|
+| `count` | integer | No | `50` | Number of records to return |
+| `prev` | string | No | `""` | Use `"1"` to paginate backward |
+| `daascore` | uint64 | No | `0` or `18446744073709551614` | Range start when using DAA score |
+| `bluescore` | uint64 | No | `0` or `18446744073709551614` | Range start when using blue score |
+
+### Range Selection Rules
+
+The route defaults to `daascore` mode.
+
+- If `daascore` is absent and `bluescore` is present, the route uses blue score ordering
+- If `prev=1`, the default range start becomes `18446744073709551614`
+- Otherwise, the default range start is `0`
+
+### Success Response
 
 ```json
 {
   "message": "successful",
   "result": [
     {
-      "address": "string",
+      "txId": "transaction id",
+      "txHash": "transaction hash",
+      "inputs": [],
+      "outputs": [],
+      "fee": "0",
+      "blockHash": "block hash",
+      "blockTime": "1710000000",
+      "acceptedBlock": "accepting block hash",
+      "acceptedDaaScore": "123456",
+      "acceptedBlueScore": "123450",
+      "acceptedTime": "1710000000",
+      "isAccepted": "true"
+    }
+  ]
+}
+```
+
+### Result Item Field Definitions
+
+Each transaction object contains:
+
+| Field | Type | Meaning |
+|------|------|---------|
+| `txId` | string | Transaction ID in hex |
+| `txHash` | string | Transaction hash in hex |
+| `inputs` | array | Transaction input list |
+| `outputs` | array | Transaction output list |
+| `fee` | string | Computed fee |
+| `blockHash` | string | Original block hash recorded on the transaction |
+| `blockTime` | string | Original block timestamp recorded on the transaction |
+| `acceptedBlock` | string | Hash of the accepting block |
+| `acceptedDaaScore` | string | DAA score of the accepting block |
+| `acceptedBlueScore` | string | Blue score of the accepting block |
+| `acceptedTime` | string | Timestamp of the accepting block |
+| `isAccepted` | string | Whether the transaction is accepted |
+
+### Input Object Field Definitions
+
+| Field | Type | Meaning |
+|------|------|---------|
+| `prevTxId` | string | Previous transaction ID |
+| `prevTxIndex` | string | Previous output index |
+| `address` | string | Input address |
+| `amount` | string | Input amount |
+| `spk` | string | Derived script public key |
+| `spkType` | string | Derived script public key type |
+
+### Output Object Field Definitions
+
+| Field | Type | Meaning |
+|------|------|---------|
+| `address` | string | Output address |
+| `amount` | string | Output amount |
+| `spk` | string | Derived script public key |
+| `spkType` | string | Derived script public key type |
+
+### Empty Result Response
+
+```json
+{
+  "message": "successful",
+  "result": null
+}
+```
+
+### Error Responses
+
+#### Invalid Address
+
+- HTTP `400`
+
+```json
+{
+  "message": "address invalid",
+  "result": null
+}
+```
+
+#### Invalid Range
+
+- HTTP `400`
+
+```json
+{
+  "message": "range invalid",
+  "result": null
+}
+```
+
+#### Internal Error
+
+- HTTP `503`
+
+```json
+{
+  "message": "internal error",
+  "result": null
+}
+```
+
+---
+
+## GET /kaspad/addresses/{address}/balance
+
+Returns the balance entry for a single Kaspa address from the Kaspa gRPC backend.
+
+### Path Parameters
+
+| Name | Type | Required | Description |
+|------|------|----------|-------------|
+| `address` | string | Yes | Kaspa address |
+
+### Success Response
+
+```json
+{
+  "message": "successful",
+  "result": {
+    "address": "kaspa:...",
+    "balance": 123456789,
+    "error": null
+  }
+}
+```
+
+### Result Field Definitions
+
+| Field | Type | Meaning |
+|------|------|---------|
+| `address` | string | Queried Kaspa address |
+| `balance` | uint64 | Current balance for the address |
+| `error` | object/null | RPC-level error for this specific address entry, if any |
+
+### Empty Result Response
+
+If the backend returns no entry or more than one entry:
+
+```json
+{
+  "message": "successful",
+  "result": null
+}
+```
+
+### Error Responses
+
+#### Invalid Address
+
+- HTTP `400`
+
+```json
+{
+  "message": "address invalid",
+  "result": null
+}
+```
+
+#### Kaspad Error
+
+- HTTP `503`
+
+```json
+{
+  "message": "kaspad error",
+  "result": null
+}
+```
+
+---
+
+## GET /kaspad/addresses/{address}/utxos
+
+Returns UTXOs for a single Kaspa address from the Kaspa gRPC backend.
+
+### Path Parameters
+
+| Name | Type | Required | Description |
+|------|------|----------|-------------|
+| `address` | string | Yes | Kaspa address |
+
+### Success Response
+
+```json
+{
+  "message": "successful",
+  "result": [
+    {
+      "address": "kaspa:...",
       "outpoint": {
-        "transactionId": "string",
+        "transactionId": "txid",
         "index": 0
       },
       "utxoEntry": {
-        "amount": 0,
+        "amount": 1000,
         "scriptPublicKey": {
           "version": 0,
-          "scriptPublicKey": "string"
+          "scriptPublicKey": "..."
         },
-        "blockDaaScore": 0,
+        "blockDaaScore": 123456,
         "isCoinbase": false,
         "verboseData": {
-          "scriptPublicKeyType": "string",
-          "scriptPublicKeyAddress": "string"
+          "scriptPublicKeyType": "...",
+          "scriptPublicKeyAddress": "kaspa:..."
         }
       }
     }
@@ -702,74 +785,267 @@ Returns all UTXOs for one address.
 }
 ```
 
-### Field Meaning
+### Result Item Field Definitions
 
-- `message`: request result status
-- `result[]`: UTXO records owned by the address
-- `result[].address`: owner address
-- `result[].outpoint.transactionId`: transaction containing the UTXO
-- `result[].outpoint.index`: output index
-- `result[].utxoEntry.amount`: UTXO amount
-- `result[].utxoEntry.scriptPublicKey.version`: script version
-- `result[].utxoEntry.scriptPublicKey.scriptPublicKey`: raw script public key
-- `result[].utxoEntry.blockDaaScore`: block DAA score
-- `result[].utxoEntry.isCoinbase`: whether coinbase-derived
-- `result[].utxoEntry.verboseData.scriptPublicKeyType`: script type
-- `result[].utxoEntry.verboseData.scriptPublicKeyAddress`: decoded script address
+| Field | Type | Meaning |
+|------|------|---------|
+| `address` | string | Address owning the UTXO |
+| `outpoint` | object | Unique reference to the unspent output |
+| `utxoEntry` | object | UTXO data itself |
+
+### `outpoint` Field Definitions
+
+| Field | Type | Meaning |
+|------|------|---------|
+| `transactionId` | string | Transaction ID containing the output |
+| `index` | uint32 | Output index inside that transaction |
+
+### `utxoEntry` Field Definitions
+
+| Field | Type | Meaning |
+|------|------|---------|
+| `amount` | uint64 | Amount stored in the UTXO |
+| `scriptPublicKey` | object | Locking script information |
+| `blockDaaScore` | uint64 | DAA score of the block associated with the UTXO |
+| `isCoinbase` | bool | Whether the UTXO comes from a coinbase transaction |
+| `verboseData` | object | Additional decoded script/address information |
+
+### `scriptPublicKey` Field Definitions
+
+| Field | Type | Meaning |
+|------|------|---------|
+| `version` | uint32 | Script public key version |
+| `scriptPublicKey` | string | Script public key content |
+
+### `verboseData` Field Definitions
+
+| Field | Type | Meaning |
+|------|------|---------|
+| `scriptPublicKeyType` | string | Script type |
+| `scriptPublicKeyAddress` | string | Decoded address for the script |
+
+### Empty Result Response
+
+```json
+{
+  "message": "successful",
+  "result": null
+}
+```
+
+### Error Responses
+
+#### Invalid Address
+
+- HTTP `400`
+
+```json
+{
+  "message": "address invalid",
+  "result": null
+}
+```
+
+#### Kaspad Error
+
+- HTTP `503`
+
+```json
+{
+  "message": "kaspad error",
+  "result": null
+}
+```
 
 ---
 
 ## POST /kaspad/transactions
 
-Submits a new transaction.
+Submits a new transaction to the Kaspa backend.
 
-### Response
+### Request Body
+
+JSON body mapped to:
+
+- `protowire.RpcTransaction`
+
+Main request fields visible from the proto:
+
+| Field | Type | Meaning |
+|------|------|---------|
+| `version` | uint32 | Transaction version |
+| `inputs` | array | Transaction inputs |
+| `outputs` | array | Transaction outputs |
+| `lockTime` | uint64 | Transaction lock time |
+| `subnetworkId` | string | Subnetwork ID |
+| `gas` | uint64 | Gas value |
+| `payload` | string | Transaction payload |
+| `verboseData` | object | Optional verbose transaction data |
+| `mass` | uint64 | Transaction mass |
+
+### Success Response
+
+If submission succeeds without backend transaction-level error:
 
 ```json
 {
   "message": "successful",
   "result": {
-    "transactionId": "string",
-    "error": {}
+    "transactionId": "txid",
+    "error": null
   }
 }
 ```
 
-### Field Meaning
+### Result Field Definitions
 
-- `message`:  
-  - `successful` if submission succeeded and response error is empty  
-  - `failed` if kaspad returned a logical transaction error
-- `result.transactionId`: submitted transaction ID
-- `result.error`: backend logical error, if any
+The exact generated response structure depends on `SubmitTransactionResponseMessage`.  
+At minimum, the code explicitly checks:
+
+| Field | Type | Meaning |
+|------|------|---------|
+| `error` | object/null | RPC/backend error for the submitted transaction |
+
+Common implementations also include a transaction identifier such as `transactionId`.
+
+### Failed Submission Response
+
+If the RPC call succeeds but the response contains an error:
+
+```json
+{
+  "message": "failed",
+  "result": {
+    "error": {
+      "...": "backend error details"
+    }
+  }
+}
+```
+
+### Error Responses
+
+#### Invalid Request Body
+
+- HTTP `400`
+
+```json
+{
+  "message": "data invalid",
+  "result": null
+}
+```
+
+#### Kaspad Error
+
+- HTTP `503`
+
+```json
+{
+  "message": "kaspad error",
+  "result": null
+}
+```
 
 ---
 
 ## POST /kaspad/transactions/rbf
 
-Submits a replacement transaction using RBF.
+Submits a replacement transaction using RBF semantics.
 
-### Response
+### Request Body
+
+JSON body mapped to:
+
+- `protowire.RpcTransaction`
+
+Main request fields visible from the proto:
+
+| Field | Type | Meaning |
+|------|------|---------|
+| `version` | uint32 | Transaction version |
+| `inputs` | array | Transaction inputs |
+| `outputs` | array | Transaction outputs |
+| `lockTime` | uint64 | Transaction lock time |
+| `subnetworkId` | string | Subnetwork ID |
+| `gas` | uint64 | Gas value |
+| `payload` | string | Transaction payload |
+| `verboseData` | object | Optional verbose transaction data |
+| `mass` | uint64 | Transaction mass |
+
+### Success Response
+
+If submission succeeds without backend transaction-level error:
 
 ```json
 {
   "message": "successful",
   "result": {
-    "transactionId": "string",
-    "replacedTransaction": {},
-    "error": {}
+    "transactionId": "replacement-txid",
+    "error": null
   }
 }
 ```
 
-### Field Meaning
+### Result Field Definitions
 
-- `message`:  
-  - `successful` if replacement succeeded and response error is empty  
-  - `failed` if kaspad returned a logical transaction error
-- `result.transactionId`: replacement transaction ID
-- `result.replacedTransaction`: previous mempool transaction replaced by the new one
-- `result.error`: backend logical error, if any
+The exact generated response structure depends on `SubmitTransactionReplacementResponseMessage`.  
+At minimum, the code explicitly checks:
+
+| Field | Type | Meaning |
+|------|------|---------|
+| `error` | object/null | RPC/backend error for the replacement transaction |
+
+### Failed Submission Response
+
+If the RPC call succeeds but the response contains an error:
+
+```json
+{
+  "message": "failed",
+  "result": {
+    "error": {
+      "...": "backend error details"
+    }
+  }
+}
+```
+
+### Error Responses
+
+#### Invalid Request Body
+
+- HTTP `400`
+
+```json
+{
+  "message": "data invalid",
+  "result": null
+}
+```
+
+#### Kaspad Error
+
+- HTTP `503`
+
+```json
+{
+  "message": "kaspad error",
+  "result": null
+}
+```
+
+---
+
+## HTTP Status Summary
+
+| Status Code | Meaning |
+|------------|---------|
+| `200` | Request succeeded |
+| `400` | Invalid path/query/body input |
+| `404` | Route not found |
+| `500` | Status middleware failed to obtain backend status |
+| `503` | Backend unavailable, unsynced, or internal processing error |
 
 ---
 
@@ -790,9 +1066,9 @@ Submits a replacement transaction using RBF.
 
 ---
 
-## Source Basis
+## Source Notes
 
-This documentation is based on the current implementation in:
+This document was regenerated from the current route registration and handlers in:
 
 - `api/init.go`
 - `api/routeBookStatus.go`
@@ -803,3 +1079,5 @@ This documentation is based on the current implementation in:
 - `api/format.go`
 - `database/runtime.go`
 - `proto/protowire/rpc.proto`
+
+Some RPC response structures are defined in protobuf and may contain additional fields not directly used by the handlers. This document focuses on fields that can be confirmed from the current repository code.
