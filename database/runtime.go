@@ -102,17 +102,6 @@ func getIddkeysByDaaScoreList(daaScoreList []uint64) (map[string]struct{}, error
 }
 
 ////////////////////////////////
-func delIddkeys(tx *C.rocksdb_transaction_t, iddkeys map[string]struct{}) (error) {
-    for key := range iddkeys {
-        err := deleteCF(tx, cfState, []byte(key))
-        if err != nil {
-            return err
-        }
-    }
-    return nil
-}
-
-////////////////////////////////
 func setIddkeys(tx *C.rocksdb_transaction_t, iddkeysList map[string][]string) (error) {
     for key, list := range iddkeysList {
         listBin := make([][]byte, len(list))

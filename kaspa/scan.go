@@ -50,6 +50,9 @@ func scan() (bool) {
     if lenAdded == 0 || lenAdded != len(vspc.ChainBlockAcceptedTransactions) {
         return sleepLog(550, slog.Debug, "kaspa.GetVirtualChainFromBlockV2 empty/mismatch, sleep 0.55s.")
     }
+    if lenRemoved > 0 {
+        countReorg ++
+    }
     // Process the vspc/tx data list and update the runtime status.
     daaScoreListByRemoved := make([]uint64, 0, lenRemoved)
     for _, hash := range vspc.RemovedChainBlockHashes {

@@ -195,7 +195,7 @@ func ProcessIndexVspc(daaScoreListByRemoved []uint64, acceptedList []*protowire.
         }
     }
     // iddkeys
-    err = delIddkeys(txRocks, iddkeysToRemove)
+    err = delIndexByIddkeys(txRocks, iddkeysToRemove)
     if err != nil {
         txRollback(txRocks)
         return status, err
@@ -231,6 +231,17 @@ func ProcessIndexVspc(daaScoreListByRemoved []uint64, acceptedList []*protowire.
     }
     SetDaaScoreLastRocks(status.DaaScoreBookInt)
     return status, nil
+}
+
+////////////////////////////////
+func delIndexByIddkeys(tx *C.rocksdb_transaction_t, iddkeys map[string]struct{}) (error) {
+    for key := range iddkeys {
+        err := deleteCF(tx, cfIndex, []byte(key))
+        if err != nil {
+            return err
+        }
+    }
+    return nil
 }
 
 ////////////////////////////////
