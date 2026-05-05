@@ -15,7 +15,7 @@ import (
 var json = jsoniter.ConfigCompatibleWithStandardLibrary
 
 ////////////////////////////////
-const Version = "1.01.260430"
+const Version = "1.01.260505"
 
 ////////////////////////////////
 type cmdConfig struct {
@@ -66,7 +66,7 @@ var Api ApiConfig
 
 ////////////////////////////////
 var args = &cmdConfig{  // default
-    Hysteresis: 100,
+    Hysteresis: 20,
     Concurrency: 8,
     Debug: 2,
     KaspadGrpc: "127.0.0.1:16110",
