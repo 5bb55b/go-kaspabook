@@ -39,6 +39,7 @@ type formatTransactionType struct {
 	TxHash string `json:"txHash"`
 	Inputs []*formatTransactionInputType `json:"inputs"`
 	Outputs []*formatTransactionOutputType `json:"outputs"`
+    Payload string `json:"payload"`
     Fee string `json:"fee"`
 	BlockHash string `json:"blockHash"`
 	BlockTime string `json:"blockTime"`
@@ -101,6 +102,7 @@ func formatBookTransaction(txData *protobook.Transaction, blockData *protobook.B
     result := &formatTransactionType{
         TxId: hex.EncodeToString(txData.TxId),
         TxHash: hex.EncodeToString(txData.TxHash),
+        Payload: hex.EncodeToString(txData.Payload),
         BlockHash: hex.EncodeToString(txData.BlockHash),
         BlockTime: strconv.FormatUint(txData.BlockTime,10),
         IsAccepted: "false",

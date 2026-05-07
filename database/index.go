@@ -99,6 +99,10 @@ func ProcessIndexVspc(daaScoreListByRemoved []uint64, acceptedList []*protowire.
             txIdBin, _ := hex.DecodeString(txId)
             txHashBin, _ := hex.DecodeString(*txAccepted.VerboseData.Hash)
             blockHashBin, _ := hex.DecodeString(*txAccepted.VerboseData.BlockHash)
+            var payloadBin []byte
+            if config.Rocksdb.DataPayload {
+                payloadBin, _ = hex.DecodeString(*txAccepted.Payload)
+            }
             txInputs := make([]*protobook.TransactionInput, len(txAccepted.Inputs))
             for i, input := range txAccepted.Inputs {
                 prevTxIdBin, _ := hex.DecodeString(*input.PreviousOutpoint.TransactionId)
@@ -125,6 +129,7 @@ func ProcessIndexVspc(daaScoreListByRemoved []uint64, acceptedList []*protowire.
                 TxHash: txHashBin,
                 BlockHash: blockHashBin,
                 BlockTime: *txAccepted.VerboseData.BlockTime,
+                Payload: payloadBin,
                 Inputs: txInputs,
                 Outputs: txOutputs,
             }

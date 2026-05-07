@@ -30,7 +30,9 @@ type cmdConfig struct {
     RocksPath string `long:"rocks-path" description:"RocksDB data path."`
     RocksDtl uint64 `long:"rocks-dtl" description:"Maximum DAA Score lifetime for indexed data."`
     RocksGcLoop bool `long:"rocks-gcloop" description:"Enable proactive compaction loop."`
-    // Api
+    // data
+    DataPayload bool `long:"data-payload" description:"Enable saving of transaction payload."`
+    // api
     ApiHost string `long:"api-host" description:"Listen host for the API server."`
     ApiPort int `long:"api-port" description:"Listen port for the API server."`
     ApiTimeout int `long:"api-timeout" description:"Processing timeout for the API server in seconds."`
@@ -50,6 +52,7 @@ type RocksConfig struct {
     Path string `json:"path"`
     DtlIndex uint64 `json:"dtlIndex"`
     GcLoop bool `json:"gcLoop"`
+    DataPayload bool `json:"dataPayload"`
 }
 type ApiConfig struct {
     Host string `json:"host"`
@@ -119,6 +122,7 @@ func Load() {
     Rocksdb.Path = args.RocksPath
     Rocksdb.DtlIndex = args.RocksDtl
     Rocksdb.GcLoop = args.RocksGcLoop
+    Rocksdb.DataPayload = args.DataPayload
     Api.Host = args.ApiHost
     Api.Port = args.ApiPort
     Api.Timeout = args.ApiTimeout

@@ -157,6 +157,7 @@ type Transaction struct {
 	BlockTime     uint64                 `protobuf:"varint,4,opt,name=blockTime,proto3" json:"blockTime,omitempty"`
 	Inputs        []*TransactionInput    `protobuf:"bytes,5,rep,name=inputs,proto3" json:"inputs,omitempty"`
 	Outputs       []*TransactionOutput   `protobuf:"bytes,6,rep,name=outputs,proto3" json:"outputs,omitempty"`
+	Payload       []byte                 `protobuf:"bytes,7,opt,name=payload,proto3" json:"payload,omitempty"`
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
 }
@@ -229,6 +230,13 @@ func (x *Transaction) GetInputs() []*TransactionInput {
 func (x *Transaction) GetOutputs() []*TransactionOutput {
 	if x != nil {
 		return x.Outputs
+	}
+	return nil
+}
+
+func (x *Transaction) GetPayload() []byte {
+	if x != nil {
+		return x.Payload
 	}
 	return nil
 }
@@ -366,14 +374,15 @@ const file_db_proto_rawDesc = "" +
 	"\bdaaScore\x18\x02 \x01(\x04R\bdaaScore\x12\x1c\n" +
 	"\tblueScore\x18\x03 \x01(\x04R\tblueScore\x12\x1c\n" +
 	"\ttimestamp\x18\x04 \x01(\x04R\ttimestamp\x122\n" +
-	"\x14acceptedIdMerkleRoot\x18\x05 \x01(\fR\x14acceptedIdMerkleRoot\"\xe2\x01\n" +
+	"\x14acceptedIdMerkleRoot\x18\x05 \x01(\fR\x14acceptedIdMerkleRoot\"\xfc\x01\n" +
 	"\vTransaction\x12\x12\n" +
 	"\x04txId\x18\x01 \x01(\fR\x04txId\x12\x16\n" +
 	"\x06txHash\x18\x02 \x01(\fR\x06txHash\x12\x1c\n" +
 	"\tblockHash\x18\x03 \x01(\fR\tblockHash\x12\x1c\n" +
 	"\tblockTime\x18\x04 \x01(\x04R\tblockTime\x123\n" +
 	"\x06inputs\x18\x05 \x03(\v2\x1b.protobook.TransactionInputR\x06inputs\x126\n" +
-	"\aoutputs\x18\x06 \x03(\v2\x1c.protobook.TransactionOutputR\aoutputs\"\x82\x01\n" +
+	"\aoutputs\x18\x06 \x03(\v2\x1c.protobook.TransactionOutputR\aoutputs\x12\x18\n" +
+	"\apayload\x18\a \x01(\fR\apayload\"\x82\x01\n" +
 	"\x10TransactionInput\x12\x1a\n" +
 	"\bprevTxId\x18\x01 \x01(\fR\bprevTxId\x12 \n" +
 	"\vprevTxIndex\x18\x02 \x01(\rR\vprevTxIndex\x12\x18\n" +

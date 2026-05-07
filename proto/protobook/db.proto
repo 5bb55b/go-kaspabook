@@ -24,6 +24,7 @@ message Transaction {
 	uint64 blockTime = 4;
 	repeated TransactionInput inputs = 5;
 	repeated TransactionOutput outputs = 6;
+	bytes payload = 7;
 }
 
 message TransactionInput {
