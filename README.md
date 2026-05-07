@@ -44,6 +44,7 @@ Application Options:
       --rocks-path=   RocksDB data path. (default: ./data)
       --rocks-dtl=    Maximum DAA Score lifetime for indexed data. (default: 86400000)
       --rocks-gcloop  Enable proactive compaction loop.
+      --data-payload  Enable saving of transaction payload.
       --api-host=     Listen host for the API server. (default: 0.0.0.0)
       --api-port=     Listen port for the API server. (default: 8003)
       --api-timeout=  Processing timeout for the API server in seconds. (default: 15)
