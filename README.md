@@ -31,7 +31,7 @@ A usable kaspa node for gRPC is required.
 <pre>
 ./kaspabook --help
 
-KaspaBOOK v1.01.260430
+KaspaBOOK v1.01.260508
 Usage:
   kaspabook [OPTIONS]
 
