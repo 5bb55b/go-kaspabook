@@ -25,6 +25,7 @@ type formatTransactionInputType struct {
 	Amount string `json:"amount"`
     Spk string `json:"spk"`
     SpkType string `json:"spkType"`
+    SigScript string `json:"sigScript"`
 }
 
 type formatTransactionOutputType struct {
@@ -124,6 +125,7 @@ func formatBookTransaction(txData *protobook.Transaction, blockData *protobook.B
             PrevTxIndex: strconv.FormatUint(uint64(input.PrevTxIndex),10),
             Address: input.Address,
             Amount: strconv.FormatUint(input.Amount,10),
+            SigScript: hex.EncodeToString(input.SignatureScript),
         }
         amountIn += input.Amount
         result.Inputs[i].Spk, result.Inputs[i].SpkType, _, _ = misc.ConvAddressToSpk(input.Address)

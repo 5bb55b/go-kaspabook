@@ -32,6 +32,7 @@ message TransactionInput {
 	uint32 prevTxIndex = 2;
 	string address = 3;
 	uint64 amount = 4;
+	bytes signatureScript = 5;
 }
 
 message TransactionOutput {

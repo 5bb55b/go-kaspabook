@@ -105,6 +105,10 @@ func ProcessIndexVspc(daaScoreListByRemoved []uint64, acceptedList []*protowire.
             }
             txInputs := make([]*protobook.TransactionInput, len(txAccepted.Inputs))
             for i, input := range txAccepted.Inputs {
+                var sigScriptBin []byte
+                if config.Rocksdb.DataSigScript {
+                    sigScriptBin, _ = hex.DecodeString(*input.SignatureScript)
+                }
                 prevTxIdBin, _ := hex.DecodeString(*input.PreviousOutpoint.TransactionId)
                 address := *input.VerboseData.UtxoEntry.VerboseData.ScriptPublicKeyAddress
                 txInputs[i] = &protobook.TransactionInput{
@@ -112,6 +116,7 @@ func ProcessIndexVspc(daaScoreListByRemoved []uint64, acceptedList []*protowire.
                     PrevTxIndex: *input.PreviousOutpoint.Index,
                     Address: address,
                     Amount: *input.VerboseData.UtxoEntry.Amount,
+                    SignatureScript: sigScriptBin,
                 }
                 addressMap[address] = struct{}{}
             }

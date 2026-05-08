@@ -36,19 +36,20 @@ Usage:
   kaspabook [OPTIONS]
 
 Application Options:
-      --showconfig    Show all configuration parameters.
-      --hysteresis=   Number of DAA Scores hysteresis for data scanning. (default: 100)
-      --concurrency=  Number of concurrent workers. (default: 8)
-      --debug=        Debug information level; [0-3] available. (default: 2)
-      --kaspad-grpc=  Kaspa node gRPC endpoint (comma-separated for multiple). (default: 127.0.0.1:16110)
-      --rocks-path=   RocksDB data path. (default: ./data)
-      --rocks-dtl=    Maximum DAA Score lifetime for indexed data. (default: 86400000)
-      --rocks-gcloop  Enable proactive compaction loop.
-      --data-payload  Enable saving of transaction payload.
-      --api-host=     Listen host for the API server. (default: 0.0.0.0)
-      --api-port=     Listen port for the API server. (default: 8003)
-      --api-timeout=  Processing timeout for the API server in seconds. (default: 15)
-      --api-connmax=  Maximum number of concurrent connections for the API server. (default: 1000)
+      --showconfig      Show all configuration parameters.
+      --hysteresis=     Number of DAA Scores hysteresis for data scanning. (default: 100)
+      --concurrency=    Number of concurrent workers. (default: 8)
+      --debug=          Debug information level; [0-3] available. (default: 2)
+      --kaspad-grpc=    Kaspa node gRPC endpoint (comma-separated for multiple). (default: 127.0.0.1:16110)
+      --rocks-path=     RocksDB data path. (default: ./data)
+      --rocks-dtl=      Maximum DAA Score lifetime for indexed data. (default: 86400000)
+      --rocks-gcloop    Enable proactive compaction loop. (default: true)
+      --data-payload    Enable saving of transaction payload.
+      --data-sigscript  Enable saving of transaction signature script.
+      --api-host=       Listen host for the API server. (default: 0.0.0.0)
+      --api-port=       Listen port for the API server. (default: 8003)
+      --api-timeout=    Processing timeout for the API server in seconds. (default: 15)
+      --api-connmax=    Maximum number of concurrent connections for the API server. (default: 1000)
 
 Help Options:
   -h, --help          Show this help message

@@ -15,7 +15,7 @@ import (
 var json = jsoniter.ConfigCompatibleWithStandardLibrary
 
 ////////////////////////////////
-const Version = "1.01.260507"
+const Version = "1.01.260508"
 
 ////////////////////////////////
 type cmdConfig struct {
@@ -29,9 +29,10 @@ type cmdConfig struct {
     // rocksdb
     RocksPath string `long:"rocks-path" description:"RocksDB data path."`
     RocksDtl uint64 `long:"rocks-dtl" description:"Maximum DAA Score lifetime for indexed data."`
-    RocksGcLoop bool `long:"rocks-gcloop" description:"Enable proactive compaction loop."`
+    RocksGcLoop bool `long:"rocks-gcloop" description:"Enable proactive compaction loop. (default: true)"`
     // data
     DataPayload bool `long:"data-payload" description:"Enable saving of transaction payload."`
+    DataSigScript bool `long:"data-sigscript" description:"Enable saving of transaction signature script."`
     // api
     ApiHost string `long:"api-host" description:"Listen host for the API server."`
     ApiPort int `long:"api-port" description:"Listen port for the API server."`
@@ -53,6 +54,7 @@ type RocksConfig struct {
     DtlIndex uint64 `json:"dtlIndex"`
     GcLoop bool `json:"gcLoop"`
     DataPayload bool `json:"dataPayload"`
+    DataSigScript bool `json:"dataSigScript"`
 }
 type ApiConfig struct {
     Host string `json:"host"`
@@ -123,6 +125,7 @@ func Load() {
     Rocksdb.DtlIndex = args.RocksDtl
     Rocksdb.GcLoop = args.RocksGcLoop
     Rocksdb.DataPayload = args.DataPayload
+    Rocksdb.DataSigScript = args.DataSigScript
     Api.Host = args.ApiHost
     Api.Port = args.ApiPort
     Api.Timeout = args.ApiTimeout

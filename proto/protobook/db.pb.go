@@ -242,13 +242,14 @@ func (x *Transaction) GetPayload() []byte {
 }
 
 type TransactionInput struct {
-	state         protoimpl.MessageState `protogen:"open.v1"`
-	PrevTxId      []byte                 `protobuf:"bytes,1,opt,name=prevTxId,proto3" json:"prevTxId,omitempty"`
-	PrevTxIndex   uint32                 `protobuf:"varint,2,opt,name=prevTxIndex,proto3" json:"prevTxIndex,omitempty"`
-	Address       string                 `protobuf:"bytes,3,opt,name=address,proto3" json:"address,omitempty"`
-	Amount        uint64                 `protobuf:"varint,4,opt,name=amount,proto3" json:"amount,omitempty"`
-	unknownFields protoimpl.UnknownFields
-	sizeCache     protoimpl.SizeCache
+	state           protoimpl.MessageState `protogen:"open.v1"`
+	PrevTxId        []byte                 `protobuf:"bytes,1,opt,name=prevTxId,proto3" json:"prevTxId,omitempty"`
+	PrevTxIndex     uint32                 `protobuf:"varint,2,opt,name=prevTxIndex,proto3" json:"prevTxIndex,omitempty"`
+	Address         string                 `protobuf:"bytes,3,opt,name=address,proto3" json:"address,omitempty"`
+	Amount          uint64                 `protobuf:"varint,4,opt,name=amount,proto3" json:"amount,omitempty"`
+	SignatureScript []byte                 `protobuf:"bytes,5,opt,name=signatureScript,proto3" json:"signatureScript,omitempty"`
+	unknownFields   protoimpl.UnknownFields
+	sizeCache       protoimpl.SizeCache
 }
 
 func (x *TransactionInput) Reset() {
@@ -307,6 +308,13 @@ func (x *TransactionInput) GetAmount() uint64 {
 		return x.Amount
 	}
 	return 0
+}
+
+func (x *TransactionInput) GetSignatureScript() []byte {
+	if x != nil {
+		return x.SignatureScript
+	}
+	return nil
 }
 
 type TransactionOutput struct {
@@ -382,12 +390,13 @@ const file_db_proto_rawDesc = "" +
 	"\tblockTime\x18\x04 \x01(\x04R\tblockTime\x123\n" +
 	"\x06inputs\x18\x05 \x03(\v2\x1b.protobook.TransactionInputR\x06inputs\x126\n" +
 	"\aoutputs\x18\x06 \x03(\v2\x1c.protobook.TransactionOutputR\aoutputs\x12\x18\n" +
-	"\apayload\x18\a \x01(\fR\apayload\"\x82\x01\n" +
+	"\apayload\x18\a \x01(\fR\apayload\"\xac\x01\n" +
 	"\x10TransactionInput\x12\x1a\n" +
 	"\bprevTxId\x18\x01 \x01(\fR\bprevTxId\x12 \n" +
 	"\vprevTxIndex\x18\x02 \x01(\rR\vprevTxIndex\x12\x18\n" +
 	"\aaddress\x18\x03 \x01(\tR\aaddress\x12\x16\n" +
-	"\x06amount\x18\x04 \x01(\x04R\x06amount\"E\n" +
+	"\x06amount\x18\x04 \x01(\x04R\x06amount\x12(\n" +
+	"\x0fsignatureScript\x18\x05 \x01(\fR\x0fsignatureScript\"E\n" +
 	"\x11TransactionOutput\x12\x18\n" +
 	"\aaddress\x18\x01 \x01(\tR\aaddress\x12\x16\n" +
 	"\x06amount\x18\x02 \x01(\x04R\x06amountB\rZ\v.;protobookb\x06proto3"
