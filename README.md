@@ -37,7 +37,7 @@ Usage:
 
 Application Options:
       --showconfig      Show all configuration parameters.
-      --hysteresis=     Number of DAA Scores hysteresis for data scanning. (default: 100)
+      --hysteresis=     Number of DAA Scores hysteresis for data scanning. (default: 20)
       --concurrency=    Number of concurrent workers. (default: 8)
       --debug=          Debug information level; [0-3] available. (default: 2)
       --kaspad-grpc=    Kaspa node gRPC endpoint (comma-separated for multiple). (default: 127.0.0.1:16110)
