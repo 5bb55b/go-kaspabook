@@ -3,9 +3,11 @@
 package kaspa
 
 import (
+    "os"
     "fmt"
     "sync"
     "time"
+    "syscall"
     "context"
     "log/slog"
     "math/rand/v2"
@@ -117,6 +119,7 @@ func (g *GrpcConnectionType) connect(maxCallRecvMsgSize int) (error) {
                         g.retry ++
                         if g.retry > 55 {
                             slog.Error("kaspa.GrpcConnection.connect failed.", "error", "retries exceeded")
+                            syscall.Kill(os.Getpid(), syscall.SIGTERM)
                             return
                         }
                         time.Sleep(3 * time.Second)
